@@ -1,0 +1,4 @@
+type mmlistservice, domain;
+init_daemon_domain(mmlistservice)
+
+allow mmlistservice self:capability sys_nice;

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<permissions>
+    <privapp-permissions package="com.oplus.cosa">
+        <permission name="oplus.permission.OPLUS_COMPONENT_SAFE"/>
+        <permission name="oppo.permission.OPPO_COMPONENT_SAFE"/>
+        <permission name="com.oplus.permission.safe.GAME"/>
+        <permission name="com.oppo.permission.safe.GAME"/>
+        <permission name="com.oplus.permission.safe.POWER"/>
+        <permission name="com.oplus.permission.safe.SECURITY"/>
+        <permission name="com.oplus.permission.safe.SETTINGS"/>
+    </privapp-permissions>
+    <privapp-permissions package="com.oplus.games">
+        <permission name="android.permission.WRITE_SECURE_SETTINGS"/>
+    </privapp-permissions>
+</permissions>

@@ -41,6 +41,11 @@ def lib_fixup_system_ext_suffix(lib: str, partition: str, *args, **kwargs):
         'libYTCommon',
         'libmpbase',
         'libextendfile',
+        'vendor.qti.snapdragonServices.qape-V1-ndk',
+        'vendor.qti.snapdragonServices-V1-ndk',
+        'vendor.oplus.hardware.gameinference-V1-ndk',
+        'vendor.oplus.hardware.gameopt-V1-ndk',
+        'vendor.oplus.hardware.gameopt-V2-ndk',
     }
 
     return f'{lib}_system_ext' if lib in system_ext_libs else None
@@ -409,6 +414,13 @@ def blob_fixup_opluscamera_oppo_component_safe(ctx, file, file_path, *args, tmp_
         manifest.write_text(data, encoding='utf-8')
 
 
+def blob_fixup_zipalign_apk(ctx, file, file_path, *args, tmp_dir=None, **kwargs):
+    zipalign = Path(__file__).resolve().parents[3] / 'out/host/linux-x86/bin/zipalign'
+    aligned = Path(f'{file_path}.aligned')
+    run_cmd([str(zipalign if zipalign.exists() else 'zipalign'), '-p', '-f', '4', file_path, str(aligned)])
+    shutil.move(aligned, file_path)
+
+
 def blob_fixup_opluscamera_uses_library(ctx, file, file_path, *args, tmp_dir=None, **kwargs):
     if tmp_dir is None:
         return
@@ -685,6 +697,19 @@ def blob_fixup_cryptoeng_manifest(ctx, file, file_path, *args, tmp_dir=None, **k
     path.write_text(data, encoding='utf-8')
 
 
+def blob_fixup_gameopt_init_rc(ctx, file, file_path, *args, tmp_dir=None, **kwargs):
+    path = Path(file_path)
+    data = path.read_text(encoding='utf-8')
+    fixed = re.sub(
+        r'\n\non property:ro\.product\.model=PLK110\n    stop gameopt_hal_service-1-0\n',
+        '\n',
+        data,
+        count=1,
+    )
+    if fixed != data:
+        path.write_text(fixed, encoding='utf-8')
+
+
 def blob_fixup_safecenter_receiver_flags(ctx, file, file_path, *args, tmp_dir=None, **kwargs):
     if tmp_dir is None:
         return
@@ -799,6 +824,7 @@ def blob_fixup_securitypermission_safe_permissions(ctx, file, file_path, *args, 
         'com.oplus.permission.safe.CAMERA',
         'com.oplus.permission.safe.CAR_LINK',
         'com.oplus.permission.safe.CONNECTIVITY',
+        'com.oplus.permission.safe.GAME',
         'com.oplus.permission.safe.IOT',
         'com.oplus.permission.safe.LOG',
         'com.oplus.permission.safe.MEDIA',
@@ -817,6 +843,7 @@ def blob_fixup_securitypermission_safe_permissions(ctx, file, file_path, *args, 
         'com.oppo.permission.safe.AI_APP',
         'com.oppo.permission.safe.AUTHENTICATE',
         'com.oppo.permission.safe.CAMERA',
+        'com.oppo.permission.safe.GAME',
         'com.oppo.permission.safe.PRIVATE',
         'com.oppo.permission.safe.SAU',
         'com.oppo.permission.safe.SECURITY',
@@ -5660,6 +5687,11 @@ lib_fixups: lib_fixups_user_type = {
         'libYTCommon',
         'libmpbase',
         'libextendfile',
+        'vendor.qti.snapdragonServices.qape-V1-ndk',
+        'vendor.qti.snapdragonServices-V1-ndk',
+        'vendor.oplus.hardware.gameinference-V1-ndk',
+        'vendor.oplus.hardware.gameopt-V1-ndk',
+        'vendor.oplus.hardware.gameopt-V2-ndk',
     ): lib_fixup_system_ext_suffix,
 }
 
@@ -5962,6 +5994,11 @@ blob_fixups: blob_fixups_user_type = {
         .call(blob_fixup_aiunit_settings_category)
         .apktool_pack()
         .stripzip(),
+    'product/priv-app/COSA/COSA.apk': blob_fixup()
+        .call(blob_fixup_apktool_unpack_manifest)
+        .call(blob_fixup_opluscamera_oppo_component_safe)
+        .apktool_pack()
+        .call(blob_fixup_zipalign_apk),
     'system_ext/etc/permissions/vendor-oplus-hardware-cryptoeng.xml': blob_fixup()
         .call(blob_fixup_cryptoeng_permissions_xml),
     'odm/etc/permissions/vendor-oplus-hardware-cryptoeng.xml': blob_fixup()
@@ -5970,6 +6007,8 @@ blob_fixups: blob_fixups_user_type = {
         .call(blob_fixup_cryptoeng_init_rc),
     'odm/etc/vintf/manifest/manifest_oplus_cryptoeng.xml': blob_fixup()
         .call(blob_fixup_cryptoeng_manifest),
+    'odm/etc/init/vendor.oplus.hardware.gameopt-service.rc': blob_fixup()
+        .call(blob_fixup_gameopt_init_rc),
     'system_ext/app/FileManager/FileManager.apk': blob_fixup()
         .call(blob_fixup_apktool_unpack_full)
         .call(blob_fixup_opluscamera_uses_library)
@@ -6046,8 +6085,12 @@ def write_custom_android_bp():
         Path(__file__).resolve().parents[3],
     ))
 
-    android_bp = top / "vendor" / "oneplus" / "infiniti-camera" / "Android.bp"
-    if not android_bp.exists():
+    android_bp_candidates = (
+        top / "vendor" / "oneplus" / "infiniti-camera" / "Android.bp",
+        top / "device" / "oneplus" / "infiniti-camera" / "Android.bp",
+    )
+    android_bp = next((path for path in android_bp_candidates if path.exists()), None)
+    if android_bp is None:
         return
 
     custom_block = f"""

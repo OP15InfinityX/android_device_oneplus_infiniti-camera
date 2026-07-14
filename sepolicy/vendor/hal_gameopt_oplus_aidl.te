@@ -1,0 +1,9 @@
+type hal_gameopt_oplus_aidl, domain;
+init_daemon_domain(hal_gameopt_oplus_aidl)
+
+add_service(hal_gameopt_oplus_aidl, hal_gameopt_aidl_service)
+binder_use(hal_gameopt_oplus_aidl)
+binder_call(hal_gameopt_oplus_aidl, servicemanager)
+binder_call({ platform_app priv_app untrusted_app }, hal_gameopt_oplus_aidl)
+
+allow { platform_app priv_app untrusted_app } hal_gameopt_aidl_service:service_manager find;

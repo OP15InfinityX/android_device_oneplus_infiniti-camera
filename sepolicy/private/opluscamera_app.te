@@ -3,6 +3,13 @@ allow opluscamera_app opluscamera_app_data_file:dir  create_dir_perms;
 allow opluscamera_app opluscamera_app_data_file:file create_file_perms;
 allow opluscamera_app opluscamera_app_data_file:{ lnk_file sock_file fifo_file } create_file_perms;
 
+# Thumbnail cache exported through GalleryCacheFileProvider for fast-capture
+# previews opened by OnePlus Gallery.
+type opluscamera_cache_file, file_type, data_file_type, core_data_file_type, mlstrustedobject;
+type_transition opluscamera_app opluscamera_app_data_file:dir opluscamera_cache_file "oplus_thumbnail_cache";
+allow opluscamera_app opluscamera_cache_file:dir create_dir_perms;
+allow opluscamera_app opluscamera_cache_file:file create_file_perms;
+
 #  Binder infrastructure
 binder_use(opluscamera_app)
 binder_call(opluscamera_app, system_server)

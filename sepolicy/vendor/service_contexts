@@ -1,1 +1,3 @@
 vendor.oplus.hardware.cryptoeng.ICryptoeng/default    u:object_r:vendor_hal_cryptoeng_oplus_service:s0
+vendor.oplus.hardware.gameinference.IGameinferenceService/default    u:object_r:hal_gameinference_aidl_service:s0
+vendor.oplus.hardware.gameopt.IGameOptHalService/default    u:object_r:hal_gameopt_aidl_service:s0

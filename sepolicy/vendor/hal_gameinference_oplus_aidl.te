@@ -1,0 +1,9 @@
+type hal_gameinference_oplus_aidl, domain;
+init_daemon_domain(hal_gameinference_oplus_aidl)
+
+add_service(hal_gameinference_oplus_aidl, hal_gameinference_aidl_service)
+binder_use(hal_gameinference_oplus_aidl)
+binder_call(hal_gameinference_oplus_aidl, servicemanager)
+binder_call({ platform_app priv_app untrusted_app }, hal_gameinference_oplus_aidl)
+
+allow { platform_app priv_app untrusted_app } hal_gameinference_aidl_service:service_manager find;

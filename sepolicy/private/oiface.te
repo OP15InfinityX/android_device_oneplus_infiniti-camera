@@ -1,0 +1,21 @@
+type oiface, domain, coredomain;
+init_daemon_domain(oiface)
+
+add_service(oiface, oplusoiface_service)
+binder_use(oiface)
+binder_call(oiface, servicemanager)
+binder_call({ platform_app priv_app untrusted_app }, oiface)
+binder_call(oiface, { platform_app priv_app untrusted_app })
+
+allow { platform_app priv_app untrusted_app } oplusoiface_service:service_manager find;
+
+allow oiface permission_service:service_manager find;
+allow oiface proc_stat:file r_file_perms;
+allow oiface self:capability sys_nice;
+
+allow oiface cgroup:dir { read write create open add_name search getattr };
+allow oiface cgroup:file rw_file_perms;
+
+allow oiface { platform_app priv_app untrusted_app }:dir r_dir_perms;
+allow oiface { platform_app priv_app untrusted_app }:file r_file_perms;
+allow oiface { platform_app priv_app untrusted_app }:process setsched;
