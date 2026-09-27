@@ -637,6 +637,34 @@ def blob_fixup_aiunit_settings_category(ctx, file, file_path, *args, tmp_dir=Non
     manifest.write_text(data.replace(old, _SETTINGS_CATEGORY_ADVANCED_SECURITY_META, 1), encoding='utf-8')
 
 
+def blob_fixup_aiunit_settings_search(ctx, file, file_path, *args, tmp_dir=None, **kwargs):
+    # AIUnit portion of lighthouse-camera commit 957ac7388e3923009ff81ca444091db920eb988a.
+    # Google Settings Intelligence requires an unqualified PreferenceScreen root;
+    # AndroidX's inflater still resolves it to androidx.preference.PreferenceScreen.
+    if tmp_dir is None:
+        return
+
+    preference_xml = Path(tmp_dir) / 'res/xml/fragment_ai_service_platform.xml'
+    data = preference_xml.read_text(encoding='utf-8') if preference_xml.exists() else ''
+    if not data:
+        raise ValueError('AIUnit AI Service Engine preference XML not found')
+
+    old_open = '<androidx.preference.PreferenceScreen'
+    old_close = '</androidx.preference.PreferenceScreen>'
+    new_open = '<PreferenceScreen'
+    new_close = '</PreferenceScreen>'
+
+    if old_open not in data or old_close not in data:
+        if new_open in data and new_close in data:
+            return
+        raise ValueError('AIUnit AI Service Engine PreferenceScreen root not found')
+
+    preference_xml.write_text(
+        data.replace(old_open, new_open, 1).replace(old_close, new_close, 1),
+        encoding='utf-8',
+    )
+
+
 def blob_fixup_phonemanager_permission_controller_package(ctx, file, file_path, *args, tmp_dir=None, **kwargs):
     if tmp_dir is None:
         return
@@ -6025,6 +6053,11 @@ def blob_fixup_filemanager_safecheck_direct(ctx, file, file_path, *args, tmp_dir
 
 
 blob_fixups: blob_fixups_user_type = {
+    # The stock camera extension has no dynamic imports from provider-V3 or
+    # device-V3. Android 17's libcameraservice depends on their V4 libraries.
+    'system_ext/lib64/libcsextimpl.so': blob_fixup()
+        .remove_needed('android.hardware.camera.provider-V3-ndk.so')
+        .remove_needed('android.hardware.camera.device-V3-ndk.so'),
     'system_ext/lib64/libAPSClient-cmd-jni.so': blob_fixup()
         .call(blob_fixup_apsclient_force_java_heif),
     'system_ext/framework/com.oplus.camera.unit.sdk.jar': blob_fixup()
@@ -6089,6 +6122,7 @@ blob_fixups: blob_fixups_user_type = {
     'product/priv-app/AIUnit/AIUnit.apk': blob_fixup()
         .call(blob_fixup_apktool_unpack_manifest)
         .call(blob_fixup_aiunit_settings_category)
+        .call(blob_fixup_aiunit_settings_search)
         .apktool_pack()
         .stripzip(),
     'system_ext/etc/permissions/vendor-oplus-hardware-cryptoeng.xml': blob_fixup()
