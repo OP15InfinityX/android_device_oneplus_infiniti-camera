@@ -5,5 +5,7 @@
 (typeattribute new_objects)
 (typeattributeset new_objects
   ( new_objects
+    oplusaiunit_app
+    oplusgallery_app
     opluscamera_app
     opluscamera_app_data_file))

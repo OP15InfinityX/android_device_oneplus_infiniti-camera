@@ -1,0 +1,2 @@
+# Keep stock Gallery service access separate from unrelated platform apps.
+type oplusgallery_app, domain;

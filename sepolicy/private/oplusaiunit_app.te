@@ -1,0 +1,22 @@
+# Preserve the Android 17 platform_app_36 base policy for this OOS 16 app.
+typeattribute oplusaiunit_app coredomain;
+app_domain(oplusaiunit_app)
+net_domain(oplusaiunit_app)
+bluetooth_domain(oplusaiunit_app)
+platform_app_domain(oplusaiunit_app)
+
+allow oplusaiunit_app domain:memfd_file ioctl;
+allowxperm oplusaiunit_app domain:memfd_file ioctl ashmem_ioctls;
+allow oplusaiunit_app ashmem_libcutils_device:chr_file open;
+
+# AIUnit downloads native engines under its own files/Engine directory.
+# The image_mask_contour, defect-recognition and OCR engines failed to dlopen
+# these libraries with error 83 / an app_data_file execute AVC. Do not grant
+# this permission to platform_app_36 or allow executing standalone binaries.
+allow oplusaiunit_app app_data_file:file { r_file_perms execute };
+
+# Preserve the camera port's existing access for native AI/DSP runtimes.
+hal_client_domain(oplusaiunit_app, vendor_hal_unsignedhexlp)
+allow oplusaiunit_app vendor_hal_hexlp_server:fd use;
+allow oplusaiunit_app same_process_hal_file:file { getattr open read map };
+get_prop(oplusaiunit_app, system_oplus_touch_prop)

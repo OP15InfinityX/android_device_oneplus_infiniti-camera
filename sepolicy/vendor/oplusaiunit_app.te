@@ -1,0 +1,12 @@
+# Preserve camera-property and brokered FastRPC access. Qualcomm's appdomain
+# neverallow permits ioctl/read on a supplied DSP fd, but not direct open.
+get_prop(oplusaiunit_app, vendor_camera_prop)
+dontaudit oplusaiunit_app adsprpcd_file:file read;
+allow oplusaiunit_app vendor_qdsp_device:chr_file { ioctl read };
+allow oplusaiunit_app vendor_file:dir watch;
+
+# The cloud_aigc_sdinpainting worker calls Oplus Cryptoeng before submitting
+# its request. The Permissive cross-check recorded a denied binder call here.
+allow oplusaiunit_app vendor_hal_cryptoeng_oplus_service:service_manager find;
+allow oplusaiunit_app vendor_hal_cryptoeng_oplus_hwservice:hwservice_manager find;
+binder_call(oplusaiunit_app, vendor_hal_cryptoeng_oplus)

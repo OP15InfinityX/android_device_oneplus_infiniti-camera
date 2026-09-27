@@ -1,0 +1,23 @@
+# Preserve the Android 17 platform_app_36 base policy for this OOS 16 app.
+typeattribute oplusgallery_app coredomain;
+app_domain(oplusgallery_app)
+net_domain(oplusgallery_app)
+bluetooth_domain(oplusgallery_app)
+platform_app_domain(oplusgallery_app)
+
+allow oplusgallery_app domain:memfd_file ioctl;
+allowxperm oplusgallery_app domain:memfd_file ioctl ashmem_ioctls;
+allow oplusgallery_app ashmem_libcutils_device:chr_file open;
+
+# Preserve the existing Gallery retouch/native-library and Oplus UI access.
+hal_client_domain(oplusgallery_app, vendor_hal_unsignedhexlp)
+allow oplusgallery_app vendor_hal_hexlp_server:fd use;
+allow oplusgallery_app same_process_hal_file:file { getattr open read map };
+allow oplusgallery_app selinuxfs:file { getattr open read };
+allow oplusgallery_app oplus_accesscontrol_service:service_manager find;
+allow oplusgallery_app security_permission_service:service_manager find;
+set_prop(oplusgallery_app, oplus_systemclearservice_prop)
+get_prop(oplusgallery_app, system_oplus_touch_prop)
+
+# The editor's existing performance-service calls were denied for platform_app_36.
+allow oplusgallery_app horae:binder call;

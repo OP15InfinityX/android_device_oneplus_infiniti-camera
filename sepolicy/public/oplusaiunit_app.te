@@ -1,0 +1,2 @@
+# Keep downloaded AI engine execution scoped to the platform-signed AIUnit app.
+type oplusaiunit_app, domain;

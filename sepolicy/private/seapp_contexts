@@ -1,2 +1,10 @@
 # Camera
 user=_app seinfo=platform name=com.oplus.camera domain=opluscamera_app type=opluscamera_app_data_file levelFrom=all
+
+# OOS 16 apps otherwise run as platform_app_36 on Android 17. Package-specific
+# domains keep editor/DSP and downloaded-engine permissions off other apps.
+# Preserve the existing app_data_file label and per-user MLS level: no data reset.
+user=_app seinfo=platform name=com.oplus.aiunit domain=oplusaiunit_app type=app_data_file levelFrom=user
+user=_app seinfo=platform name=com.oplus.aiunit:* domain=oplusaiunit_app type=app_data_file levelFrom=user
+user=_app seinfo=platform name=com.oneplus.gallery domain=oplusgallery_app type=app_data_file levelFrom=user
+user=_app seinfo=platform name=com.oneplus.gallery:* domain=oplusgallery_app type=app_data_file levelFrom=user
