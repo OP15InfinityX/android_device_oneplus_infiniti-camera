@@ -5768,6 +5768,37 @@ def blob_fixup_camera_unit_facebeauty_probe_path(ctx, file, file_path, *args, tm
         return
 
 
+def blob_fixup_nativewinbuff_android17(ctx, file, file_path, *args, **kwargs):
+    # OOS 16.0.8 calls IGraphicBufferConsumer::releaseBuffer(slot, frame,
+    # EGLDisplay, EGLSyncKHR, fence). Android 17's BQ_GL_FENCE_CLEANUP
+    # removes the EGL arguments: fence must be in x3, not x5. Both virtual
+    # calls currently pass x3 = NULL, crashing libgui in releaseBuffer.
+    # Retain the real Fence object and change only its argument register.
+    stock_sha256 = '2d725afda39dd9d53bd890e3b22937e05923744cf061b6edd71197bd1e7479f0'
+    patched_sha256 = '4420fc766926b54efb79d3cda8db0436ccc873c6af6823052e654fb390bd58fe'
+    path = Path(file_path)
+    blob = path.read_bytes()
+    actual_sha256 = sha256(blob).hexdigest()
+    if actual_sha256 == patched_sha256:
+        return
+    if actual_sha256 != stock_sha256:
+        raise ValueError(f'NativeWinBuffExchange stock SHA-256 mismatch: {actual_sha256}')
+
+    patched = bytearray(blob)
+    for offset in (0x46D8, 0x4858):
+        # mov x3, xzr -> mov x3, sp; sp holds the existing sp<Fence>.
+        expected = bytes.fromhex('e3 03 1f aa')
+        replacement = bytes.fromhex('e3 03 00 91')
+        if blob[offset:offset + 4] != expected:
+            raise ValueError(f'NativeWinBuffExchange instruction mismatch at {offset:#x}')
+        patched[offset:offset + 4] = replacement
+
+    result = bytes(patched)
+    if sha256(result).hexdigest() != patched_sha256:
+        raise ValueError('NativeWinBuffExchange patched SHA-256 mismatch')
+    path.write_bytes(result)
+
+
 def blob_fixup_apsclient_force_java_heif(ctx, file, file_path, *args, **kwargs):
     # OPlus supports two HEIF handoffs: optional native helpers when dlopen can
     # resolve them, otherwise its Java-reflection fallback. Stock keeps this APS
@@ -6053,6 +6084,8 @@ def blob_fixup_filemanager_safecheck_direct(ctx, file, file_path, *args, tmp_dir
 
 
 blob_fixups: blob_fixups_user_type = {
+    'system_ext/lib64/libNativeWinBuffExchange.so': blob_fixup()
+        .call(blob_fixup_nativewinbuff_android17),
     # The stock camera extension has no dynamic imports from provider-V3 or
     # device-V3. Android 17's libcameraservice depends on their V4 libraries.
     'system_ext/lib64/libcsextimpl.so': blob_fixup()
