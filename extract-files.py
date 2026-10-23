@@ -29,6 +29,10 @@ import sys
 sys.path.append(str(Path(__file__).resolve().parents[3] / 'hardware/oplus/extract-utils-ext'))
 from extract_utils_oplus.coui_material import (blob_fixup_coui_material_capabilities, blob_fixup_coui_unpack_sources)
 from appfeature_provider import blob_fixup_appfeature_provider
+from runtime_capabilities import (
+    blob_fixup_gallery_backlight_capability,
+    blob_fixup_camera_result_capabilities,
+)
 
 
 APSCLIENT_STOCK_SHA256 = 'b6669463a2dbdc22d20d0bb1a565ef9f1cc058f5f34c627a8d49971f7c509bec'
@@ -6407,6 +6411,7 @@ blob_fixups: blob_fixups_user_type = {
         .apktool_unpack('patches-sdk')
         .call(blob_fixup_camera_sdk_versioned_patch)
         .call(blob_fixup_camera_unit_facebeauty_probe_path)
+        .call(blob_fixup_camera_result_capabilities)
         .apktool_pack()
         .stripzip(),
     'system_ext/priv-app/OplusCamera/OplusCamera.apk': blob_fixup()
@@ -6426,6 +6431,7 @@ blob_fixups: blob_fixups_user_type = {
     'system_ext/priv-app/OppoGallery2/OppoGallery2.apk': blob_fixup()
         .call(blob_fixup_apktool_unpack_full)
         .call(blob_fixup_coui_material_capabilities)
+        .call(blob_fixup_gallery_backlight_capability)
         .call(blob_fixup_opluscamera_uses_library)
         .call(blob_fixup_oppogallery_op15_native_libs)
         .call(blob_fixup_oppogallery_receiver_flags)
