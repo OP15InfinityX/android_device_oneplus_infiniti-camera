@@ -30,6 +30,7 @@ sys.path.append(str(Path(__file__).resolve().parents[3] / 'hardware/oplus/extrac
 from extract_utils_oplus.coui_material import (blob_fixup_coui_material_capabilities, blob_fixup_coui_unpack_sources)
 from appfeature_provider import blob_fixup_appfeature_provider
 from private_safe import blob_fixup_private_safe_unlock_dialog
+from filemanager_compat import blob_fixup_filemanager_atlas_debug_log
 from runtime_capabilities import (
     blob_fixup_gallery_backlight_capability,
     blob_fixup_camera_result_capabilities,
@@ -6490,6 +6491,7 @@ blob_fixups: blob_fixups_user_type = {
         .call(blob_fixup_cryptoeng_manifest),
     'system_ext/app/FileManager/FileManager.apk': blob_fixup()
         .call(blob_fixup_apktool_unpack_full)
+        .call(blob_fixup_filemanager_atlas_debug_log)
         .call(blob_fixup_coui_material_capabilities)
         .call(blob_fixup_opluscamera_uses_library)
         .call(blob_fixup_filemanager_safecheck_direct)
