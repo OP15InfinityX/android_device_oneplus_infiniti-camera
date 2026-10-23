@@ -2536,6 +2536,20 @@ def blob_fixup_oplus_camera_system_properties(ctx, file, file_path, *args, tmp_d
             smali.write_text(fixed, encoding='utf-8')
 
 
+def blob_fixup_melody_store_source(ctx, file, file_path, *args, **kwargs):
+    # COS17 17.0.0.102 bundles Melody 17.5.0. Keep the reviewed, complete
+    # 17.6.6 Play release pinned instead; never silently substitute a different
+    # OTA version or a partial split APK. The usual ROM fixups run afterwards.
+    stock_hash = 'afdf7c65c4a43ccffddb869eb94c306c76ab347ad251e44631a2ef8fa5eb0514'
+    pinned_hash = 'fe57c0765bccdd28d5fa5155ae7ed5ddc4926a3f16d8ef75d20f6f81331ccbe0'
+    source = Path(__file__).resolve().parent / 'prebuilts/Melody/Melody-17.6.6-unpatched.apk'
+    if sha256(source.read_bytes()).hexdigest() != pinned_hash:
+        raise ValueError('Pinned Melody 17.6.6 source APK mismatch')
+    if sha256(Path(file_path).read_bytes()).hexdigest() not in (stock_hash, pinned_hash):
+        raise ValueError('Melody OTA source changed; review the pinned store update')
+    shutil.copyfile(source, file_path)
+
+
 def blob_fixup_melody_repackaging_detector(ctx, file, file_path, *args, tmp_dir=None, **kwargs):
     if tmp_dir is None:
         return
@@ -2603,6 +2617,7 @@ def blob_fixup_melody_repackaging_detector(ctx, file, file_path, *args, tmp_dir=
 
     candidates = list(Path(tmp_dir).glob('smali*/**/L.smali'))
     candidates += list(Path(tmp_dir).glob('smali*/com/oplus/melody/common/util/S.smali'))
+    candidates += list(Path(tmp_dir).glob('smali*/com/oplus/melody/common/util/V.smali'))
     patched = 0
     for smali in candidates:
         data = smali.read_text(encoding='utf-8')
@@ -6503,6 +6518,7 @@ blob_fixups: blob_fixups_user_type = {
         .apktool_pack()
         .stripzip(),
     'system_ext/app/Melody/Melody.apk': blob_fixup()
+        .call(blob_fixup_melody_store_source, need_tmp_dir=False)
         .call(blob_fixup_apktool_unpack_full)
         .call(blob_fixup_opluscamera_uses_library)
         .call(blob_fixup_oplus_camera_system_properties)
