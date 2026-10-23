@@ -25,6 +25,10 @@ from pathlib import Path
 import glob
 import re
 import shutil
+import sys
+sys.path.append(str(Path(__file__).resolve().parents[3] / 'hardware/oplus/extract-utils-ext'))
+from extract_utils_oplus.coui_material import (blob_fixup_coui_material_capabilities, blob_fixup_coui_unpack_sources)
+from appfeature_provider import blob_fixup_appfeature_provider
 
 
 APSCLIENT_STOCK_SHA256 = 'b6669463a2dbdc22d20d0bb1a565ef9f1cc058f5f34c627a8d49971f7c509bec'
@@ -53,6 +57,11 @@ def lib_fixup_system_ext_suffix(lib: str, partition: str, *args, **kwargs):
     }
 
     return f'{lib}_system_ext' if lib in system_ext_libs else None
+
+
+def lib_fixup_stock_charger(lib: str, partition: str, *args, **kwargs):
+    # Use the OEM V11 ABI, not source V10's generated development-V11.
+    return f'{lib}_stock'
 
 
 def _noop_smali_method(data: str, signature: str) -> str:
@@ -175,17 +184,22 @@ def blob_fixup_opluscamera_blur_seginit_guard(ctx, file, file_path, *args, tmp_d
         return
 
     process_smali = next(Path(tmp_dir).glob('smali*/ub/b.smali'), None)
+    process_field = 'Lub/b;->w'
+    if process_smali is None or 'personseg.bin' not in process_smali.read_text(encoding='utf-8'):
+        # COS 17.0.0.102: same segInit algorithm, renamed class/field.
+        process_smali = next(Path(tmp_dir).glob('smali*/gf/b.smali'), None)
+        process_field = 'Lgf/b;->L'
     if process_smali is None:
         raise ValueError('OplusCamera blur process smali not found')
 
     data = process_smali.read_text(encoding='utf-8', errors='ignore')
-    if '/odm/etc/camera/singleblur/personseg.bin' not in data:
+    if '/etc/camera/singleblur/personseg.bin' not in data:
         raise ValueError('OplusCamera blur process segInit anchor not found')
 
     fixed, count = re.subn(
         r'(?s)(invoke-virtual/range \{v1 \.\. v7\}, Lcom/oplus/ocs/camera/OplusBlurPreviewHelper;->segInit\(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;II\)\[I.*?'
         r'move-result-object v0.*?'
-        r'sput-object v0, Lub/b;->w:\[I)',
+        rf'sput-object v0, {re.escape(process_field)}:\[I)',
         r'\1'
         '\n\n'
         '    if-nez v0, :cond_codex_blur_seginit_ok\n'
@@ -203,6 +217,8 @@ def blob_fixup_opluscamera_blur_seginit_guard(ctx, file, file_path, *args, tmp_d
     process_smali.write_text(fixed, encoding='utf-8')
 
     texture_smali = next(Path(tmp_dir).glob('smali*/wb/k.smali'), None)
+    if process_field == 'Lgf/b;->L':
+        texture_smali = next(Path(tmp_dir).glob('smali*/if/j.smali'), None)
     if texture_smali is None:
         raise ValueError('OplusCamera blur texture smali not found')
 
@@ -213,7 +229,7 @@ def blob_fixup_opluscamera_blur_seginit_guard(ctx, file, file_path, *args, tmp_d
     fixed, count = re.subn(
         r'(?s)(invoke-virtual/range \{v3 \.\. v9\}, Lcom/oplus/ocs/camera/OplusBlurPreviewHelper;->segInit\(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;II\)\[I.*?'
         r'move-result-object p0.*?'
-        r'sput-object p0, Lub/b;->w:\[I)',
+        rf'sput-object p0, {re.escape(process_field)}:\[I)',
         r'\1'
         '\n\n'
         '    if-nez p0, :cond_codex_blur_size_seginit_ok\n'
@@ -251,6 +267,13 @@ def blob_fixup_strip_oem_permissions(ctx, file, file_path, *args, tmp_dir=None, 
 
 def blob_fixup_systemuiplugin_plugin_context_inflater(ctx, file, file_path, *args, tmp_dir=None, **kwargs):
     if tmp_dir is None:
+        return
+
+    # This old obfuscated patch is already a no-op on our retained 16.0.8
+    # plugin (k9/b and t4/h no longer contain those methods). COS17 has a
+    # different class map and uses ContextHandler.getPluginCtx at call sites;
+    # explicitly recognize the audited binary instead of patching namesakes.
+    if sha256(Path(file_path).read_bytes()).hexdigest() == '365433d2d4883b110838caf16a23290771dc1e8dd0a1230df45c0d6dcb756d01':
         return
 
     smali = Path(tmp_dir) / 'smali' / 'k9' / 'b.smali'
@@ -437,6 +460,18 @@ def blob_fixup_opluscamera_uses_library(ctx, file, file_path, *args, tmp_dir=Non
         manifest.write_text(data, encoding='utf-8')
 
 
+
+def blob_fixup_aimemory_secure_settings_permission(ctx, file, file_path, *args, tmp_dir=None, **kwargs):
+    # COS17 writes aimemory state to Settings.Secure after the user consents.
+    manifest = Path(tmp_dir) / 'AndroidManifest.xml'
+    data = manifest.read_text(encoding='utf-8')
+    if 'android.permission.WRITE_SECURE_SETTINGS' in data:
+        return
+    if data.count('<application ') != 1:
+        raise ValueError('Unexpected AI Memory application manifest')
+    entry = '    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"/>\n'
+    manifest.write_text(data.replace('<application ', entry + '<application ', 1), encoding='utf-8')
+
 def blob_fixup_fileencryption_secure_settings_permission(ctx, file, file_path, *args, tmp_dir=None, **kwargs):
     if tmp_dir is None:
         return
@@ -464,6 +499,15 @@ def blob_fixup_fileencryption_biometric_enrollment_checks(ctx, file, file_path, 
 
     smali = Path(tmp_dir) / 'smali/c9/a.smali'
     data = smali.read_text(encoding='utf-8') if smali.exists() else ''
+    face_signature = 'public static final b(Landroid/content/Context;)Z'
+    fingerprint_signature = 'public static final c(Landroid/content/Context;)Z'
+    if f'.method {face_signature}' not in data:
+        smali = Path(tmp_dir) / 'smali/v9/a.smali'
+        data = smali.read_text(encoding='utf-8')
+        face_signature = 'public static final c(Landroid/content/Context;)Z'
+        fingerprint_signature = 'public static final d(Landroid/content/Context;)Z'
+        if 'OplusFaceManager;->hasEnrolledTemplates()Z' not in data:
+            raise ValueError('COS17 FileEncryption biometric helper mismatch')
     if not data:
         raise ValueError('FileEncryption biometric helper not found')
 
@@ -537,8 +581,8 @@ def blob_fixup_fileencryption_biometric_enrollment_checks(ctx, file, file_path, 
         '\n'
         '    return p0\n'
     )
-    fixed = _replace_smali_method(data, 'public static final b(Landroid/content/Context;)Z', face_body)
-    fixed = _replace_smali_method(fixed, 'public static final c(Landroid/content/Context;)Z', fingerprint_body)
+    fixed = _replace_smali_method(data, face_signature, face_body)
+    fixed = _replace_smali_method(fixed, fingerprint_signature, fingerprint_body)
     if fixed == data:
         raise ValueError('FileEncryption biometric enrollment checks not patched')
     smali.write_text(fixed, encoding='utf-8')
@@ -638,31 +682,26 @@ def blob_fixup_aiunit_settings_category(ctx, file, file_path, *args, tmp_dir=Non
 
 
 def blob_fixup_aiunit_settings_search(ctx, file, file_path, *args, tmp_dir=None, **kwargs):
-    # AIUnit portion of lighthouse-camera commit 957ac7388e3923009ff81ca444091db920eb988a.
-    # Google Settings Intelligence requires an unqualified PreferenceScreen root;
-    # AndroidX's inflater still resolves it to androidx.preference.PreferenceScreen.
+    # Both XMLs are advertised by COS17's AIUnitSearchIndexProvider. Google
+    # Settings Intelligence requires the unqualified PreferenceScreen root;
+    # AndroidX's inflater resolves that name to its existing PreferenceScreen.
     if tmp_dir is None:
-        return
+        raise ValueError('AIUnit search fixup requires decoded resources')
+    for name in ('fragment_ai_service_platform', 'fragment_offline_large_model'):
+        paths = list(Path(tmp_dir).glob(f'res/xml*/{name}.xml'))
+        if not paths:
+            raise ValueError(f'AIUnit search preference XML not found: {name}')
+        for path in paths:
+            data = path.read_text(encoding='utf-8')
+            old_open = '<androidx.preference.PreferenceScreen'
+            old_close = '</androidx.preference.PreferenceScreen>'
+            if '<PreferenceScreen' in data and '</PreferenceScreen>' in data:
+                continue
+            if data.count(old_open) != 1 or data.count(old_close) != 1:
+                raise ValueError(f'AIUnit search root changed: {path}')
+            path.write_text(data.replace(old_open, '<PreferenceScreen', 1)
+                .replace(old_close, '</PreferenceScreen>', 1), encoding='utf-8')
 
-    preference_xml = Path(tmp_dir) / 'res/xml/fragment_ai_service_platform.xml'
-    data = preference_xml.read_text(encoding='utf-8') if preference_xml.exists() else ''
-    if not data:
-        raise ValueError('AIUnit AI Service Engine preference XML not found')
-
-    old_open = '<androidx.preference.PreferenceScreen'
-    old_close = '</androidx.preference.PreferenceScreen>'
-    new_open = '<PreferenceScreen'
-    new_close = '</PreferenceScreen>'
-
-    if old_open not in data or old_close not in data:
-        if new_open in data and new_close in data:
-            return
-        raise ValueError('AIUnit AI Service Engine PreferenceScreen root not found')
-
-    preference_xml.write_text(
-        data.replace(old_open, new_open, 1).replace(old_close, new_close, 1),
-        encoding='utf-8',
-    )
 
 
 def blob_fixup_phonemanager_permission_controller_package(ctx, file, file_path, *args, tmp_dir=None, **kwargs):
@@ -770,6 +809,19 @@ def blob_fixup_safecenter_olock_support(ctx, file, file_path, *args, tmp_dir=Non
 
     smali = Path(tmp_dir) / 'smali_classes2/j7/k.smali'
     data = smali.read_text(encoding='utf-8') if smali.exists() else ''
+    if '.method public final J(Landroid/content/Context;)Z' not in data:
+        smali = Path(tmp_dir) / 'smali_classes2/com/oplus/safecenter/olock/manager/OLockManager.smali'
+        data = smali.read_text(encoding='utf-8')
+        if '[isSupportOLock] isSupport:' not in data:
+            raise ValueError('COS17 SafeCenter OLock support method mismatch')
+        fixed = _replace_smali_method(
+            data, 'public final J(Landroid/content/Context;)Z',
+            '    .locals 1\n\n    const/4 v0, 0x1\n\n    return v0\n',
+        )
+        if fixed == data:
+            raise ValueError('COS17 OLock support method not patched')
+        smali.write_text(fixed, encoding='utf-8')
+        return
     fixed = _replace_smali_method(
         data,
         'public final J(Landroid/content/Context;)Z',
@@ -817,6 +869,8 @@ def blob_fixup_safecenter_olock_theft_dark_theme(ctx, file, file_path, *args, tm
         if fixed == data:
             raise ValueError('SafeCenter OLock night theme patch point not found')
         values_night.write_text(fixed, encoding='utf-8')
+
+
 
 
 
@@ -880,6 +934,27 @@ def blob_fixup_oppogallery_receiver_flags(ctx, file, file_path, *args, tmp_dir=N
     if tmp_dir is None:
         return
 
+    cos17_receiver = Path(tmp_dir) / 'smali_classes2/com/oplus/gallery/foundation/uikit/broadcast/bus/ActionReceiver.smali'
+    cos17_dispatcher = Path(tmp_dir) / 'smali_classes2/com/oplus/gallery/foundation/uikit/broadcast/bus/a.smali'
+    if cos17_receiver.exists() and cos17_dispatcher.exists():
+        # The working baseline's ActionReceiver has this normalization. Its
+        # old secondary dispatcher patch was a no-op; do not broaden the
+        # change to all registrations in the rewritten COS17 dispatcher.
+        for target, registers, flags in (
+            (cos17_receiver, 'v2 .. v7', 'v7'),
+        ):
+            data = target.read_text(encoding='utf-8')
+            call = (
+                f'    invoke-virtual/range {{{registers}}}, Landroid/content/Context;->registerReceiver('
+                'Landroid/content/BroadcastReceiver;Landroid/content/IntentFilter;Ljava/lang/String;Landroid/os/Handler;I)Landroid/content/Intent;\n'
+            )
+            if data.count(call) != 1:
+                raise ValueError(f'COS17 Gallery receiver call mismatch: {target.name}')
+            normalize = (f'    and-int/lit8 {flags}, {flags}, -0x3\n'
+                         f'    or-int/lit8 {flags}, {flags}, 0x4\n\n')
+            target.write_text(data.replace(call, normalize + call, 1), encoding='utf-8')
+        return
+
     smali = Path(tmp_dir) / 'smali_classes8/com/oplus/aiunit/vision/ey.smali'
     data = smali.read_text(encoding='utf-8') if smali.exists() else ''
     old = (
@@ -939,6 +1014,12 @@ def blob_fixup_oppogallery_wallpaper_attach_intent(ctx, file, file_path, *args, 
 
     smali = Path(tmp_dir) / 'smali_classes10/com/oplus/gallery/pictureeditorpage/PictureEditorDM.smali'
     data = smali.read_text(encoding='utf-8') if smali.exists() else ''
+    signature = 'a(Landroid/app/Activity;Landroid/net/Uri;)V'
+    if f'.method public final {signature}' not in data:
+        signature = 'a(Landroid/app/Activity;Landroid/net/Uri;Z)V'
+        if (f'.method public final {signature}' not in data or
+                'setWallpaperSystem:exception' not in data):
+            raise ValueError('COS17 Gallery wallpaper method mismatch')
     replacement = (
         '.method public final a(Landroid/app/Activity;Landroid/net/Uri;)V\n'
         '    .locals 3\n'
@@ -974,8 +1055,9 @@ def blob_fixup_oppogallery_wallpaper_attach_intent(ctx, file, file_path, *args, 
         '    return-void\n'
         '.end method\n'
     )
+    replacement = replacement.replace('a(Landroid/app/Activity;Landroid/net/Uri;)V', signature)
     fixed, count = re.subn(
-        r'\.method public final a\(Landroid/app/Activity;Landroid/net/Uri;\)V\n.*?\.end method',
+        rf'\.method public final {re.escape(signature)}\n.*?\.end method',
         replacement,
         data,
         count=1,
@@ -988,6 +1070,32 @@ def blob_fixup_oppogallery_wallpaper_attach_intent(ctx, file, file_path, *args, 
 
 def blob_fixup_oppogallery_safe_box_custom_flag(ctx, file, file_path, *args, tmp_dir=None, **kwargs):
     if tmp_dir is None:
+        return
+
+    cos17_config = Path(tmp_dir) / 'smali/com/oplus/aiunit/vision/n6b.smali'
+    if cos17_config.exists():
+        data = cos17_config.read_text(encoding='utf-8')
+        if '.source "ConfigAbilityWrapper.kt"' not in data:
+            raise ValueError('COS17 Gallery ConfigAbilityWrapper identity mismatch')
+        signature = 'public static final b(Ljava/lang/String;ZZ)Z'
+        pattern = re.compile(
+            rf'(\.method {re.escape(signature)}\n.*?'
+            r'    invoke-virtual \{p0\}, Ljava/lang/Object;->getClass\(\)Ljava/lang/Class;\n)',
+            re.DOTALL,
+        )
+        extra = (
+            '\n    const-string v0, "feature_is_support_user_custom_safe_box"\n'
+            '    invoke-static {p0, v0}, Lkotlin/jvm/internal/Intrinsics;->areEqual(Ljava/lang/Object;Ljava/lang/Object;)Z\n'
+            '    move-result v0\n'
+            '    if-eqz v0, :codex_cos17_safe_box_default\n'
+            '    const/4 v0, 0x1\n'
+            '    return v0\n'
+            '    :codex_cos17_safe_box_default\n'
+        )
+        fixed, count = pattern.subn(lambda m: m[1] + extra, data, count=1)
+        if count != 1:
+            raise ValueError('COS17 Gallery safe-box config method mismatch')
+        cos17_config.write_text(fixed, encoding='utf-8')
         return
 
     smali = next(
@@ -1133,6 +1241,52 @@ def blob_fixup_oppogallery_google_photos_launch_consent_after_verify_failure(ctx
 
 def blob_fixup_oppogallery_hide_google_photos_backup_settings(ctx, file, file_path, *args, tmp_dir=None, **kwargs):
     if tmp_dir is None:
+        return
+
+    cos17_menu = Path(tmp_dir) / 'smali_classes2/com/oplus/aiunit/vision/rqx.smali'
+    if cos17_menu.exists() and 'action_backup_to_cloud' in cos17_menu.read_text(encoding='utf-8'):
+        data = cos17_menu.read_text(encoding='utf-8')
+        pattern = re.compile(
+            r'(    sget v1, Lcom/oplus/gallery/photo_page/R\$id;->action_backup_to_cloud:I\n'
+            r'.{0,800}?    invoke-static/range \{v0 \.\. v6\}, Lcom/oplus/aiunit/vision/rqx;->a\(Ljava/util/LinkedHashMap;ILjava/lang/String;JZZ\)V\n)',
+            re.DOTALL,
+        )
+        extra = (
+            '\n    sget v1, Lcom/oplus/gallery/photo_page/R$id;->action_backup_to_cloud:I\n'
+            '    invoke-static {v1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;\n'
+            '    move-result-object v1\n'
+            '    invoke-virtual {v0, v1}, Ljava/util/LinkedHashMap;->remove(Ljava/lang/Object;)Ljava/lang/Object;\n'
+        )
+        fixed, count = pattern.subn(lambda m: m[1] + extra, data, count=1)
+        if count != 1:
+            raise ValueError('COS17 Gallery backup menu entry mismatch')
+        cos17_menu.write_text(fixed, encoding='utf-8')
+
+        fragment = Path(tmp_dir) / 'smali_classes10/com/oplus/gallery/settingpage/SettingsActivity$SettingFragment.smali'
+        data = fragment.read_text(encoding='utf-8')
+        signature = 'public final onCreatePreferences(Landroid/os/Bundle;Ljava/lang/String;)V'
+        method = re.search(rf'(?ms)^\.method {re.escape(signature)}\n.*?^\.end method', data)
+        field = 'Lcom/oplus/gallery/settingpage/SettingsActivity$SettingFragment;->l:Landroidx/preference/PreferenceScreen;'
+        if method is None or field not in method[0]:
+            raise ValueError('COS17 Gallery settings initialization mismatch')
+        # Remove entries only after initialization, not while the app is still
+        # resolving preferences and installing their listeners.
+        cleanup = f'    iget-object v0, p0, {field}\n'
+        cleanup += '    if-eqz v0, :codex_cos17_backup_hidden_RETURN\n'
+        for key in ('pref_category_key_cloud_sync','pref_category_cloud_sync_key',
+                    'pref_key_auto_sync_2','pref_category_key_cloud_storage_space'):
+            cleanup += (f'    const-string v1, "{key}"\n'
+                        '    invoke-virtual {v0, v1}, Landroidx/preference/PreferenceGroup;->removePreferenceRecursively(Ljava/lang/CharSequence;)Z\n')
+        cleanup += '    :codex_cos17_backup_hidden_RETURN\n'
+        count = 0
+        def before_return(match):
+            nonlocal count
+            count += 1
+            return cleanup.replace('RETURN', str(count)) + match[0]
+        fixed_method = re.sub(r'(?m)^    return-void\n', before_return, method[0])
+        if count == 0:
+            raise ValueError('COS17 Gallery settings return not found')
+        fragment.write_text(data[:method.start()] + fixed_method + data[method.end():], encoding='utf-8')
         return
 
     # Hide the photo-page overflow entry on newer Gallery builds. The older
@@ -1301,6 +1455,10 @@ def blob_fixup_oppogallery_system_share_helper(ctx, file, file_path, *args, tmp_
         return
 
     smali = Path(tmp_dir) / 'smali_classes8' / 'com' / 'oplus' / 'aiunit' / 'vision' / 'x7m.smali'
+    cos17 = False
+    if not smali.exists() or '.source "ShareHelper.kt"' not in smali.read_text(encoding='utf-8'):
+        smali = Path(tmp_dir) / 'smali_classes2/com/oplus/gallery/business_lib/helper/ShareHelper.smali'
+        cos17 = True
     if not smali.exists():
         raise ValueError('OppoGallery2 ShareHelper smali not found')
 
@@ -1340,6 +1498,17 @@ def blob_fixup_oppogallery_system_share_helper(ctx, file, file_path, *args, tmp_
         '\n'
         '    goto :cond_2\n'
     )
+    if cos17:
+        # Exact new equivalent of the old custom-share selector. Leave URI,
+        # MIME conversion and all of the actual system-share branch intact.
+        matches = list(re.finditer(
+            r'    sget-object v0, Lcom/oplus/aiunit/vision/xth;->m0:Lkotlin/Lazy;\n'
+            r'.{0,1000}?    if-nez v0, :cond_2\n', data, re.DOTALL,
+        ))
+        if len(matches) != 1:
+            raise ValueError('COS17 Gallery system-share selector mismatch')
+        old = matches[0].group()
+        new = '    const/4 v1, 0x0\n\n    goto :cond_2\n'
     fixed = data.replace(old, new, 1)
     if fixed == data:
         raise ValueError('OppoGallery2 ShareHelper system-share patch point not found')
@@ -1433,10 +1602,22 @@ def blob_fixup_oppogallery_system_share_helper(ctx, file, file_path, *args, tmp_
         '    :goto_0\n'
         '    return-object p0\n'
     )
+    uri_signature = 'public static b(Lcom/oplus/aiunit/vision/rfg;)Landroid/net/Uri;'
+    if cos17:
+        uri_signature = 'public static c(Lcom/oplus/aiunit/vision/l7v;)Landroid/net/Uri;'
+        uri_body = (uri_body
+            .replace('Lcom/oplus/aiunit/vision/rfg;', 'Lcom/oplus/aiunit/vision/l7v;')
+            .replace('Lcom/oplus/aiunit/vision/ymd;', 'Lcom/oplus/aiunit/vision/mro;')
+            .replace('->x()Ljava/lang/String;', '->A()Ljava/lang/String;')
+            .replace('Lcom/oplus/aiunit/vision/s55;->a:Landroid/content/Context;',
+                     'Lcom/oplus/aiunit/vision/teb;->a:Lcom/coloros/gallery3d/app/App;')
+            .replace('Lcom/oplus/aiunit/vision/mj8;', 'Lcom/oplus/aiunit/vision/l1i;')
+            .replace('Lcom/oplus/aiunit/vision/rkp;', 'Lcom/oplus/aiunit/vision/pfb0;')
+            .replace('Lcom/oplus/aiunit/vision/ipd;', 'Lcom/oplus/aiunit/vision/d7q;'))
     before_uri = fixed
     fixed = _replace_smali_method(
         fixed,
-        'public static b(Lcom/oplus/aiunit/vision/rfg;)Landroid/net/Uri;',
+        uri_signature,
         uri_body,
     )
     if fixed == before_uri:
@@ -2414,14 +2595,33 @@ def blob_fixup_melody_repackaging_detector(ctx, file, file_path, *args, tmp_dir=
         '    return v0\n'
     )
 
-    for smali in Path(tmp_dir).glob('smali*/**/L.smali'):
+    candidates = list(Path(tmp_dir).glob('smali*/**/L.smali'))
+    candidates += list(Path(tmp_dir).glob('smali*/com/oplus/melody/common/util/S.smali'))
+    patched = 0
+    for smali in candidates:
         data = smali.read_text(encoding='utf-8')
-        if 'RepackagingDetector' not in data:
+        if '.source "RepackagingDetector.java"' not in data:
+            continue
+        if '.method public static b(Landroid/content/Context;)[B' in data:
+            # The new signer differs, but authenticated offline decryption of
+            # COS17's bundled AES-GCM + gzip whitelist proves the old key is
+            # still correct. Match the new Context-based API explicitly.
+            for method in ('b','c','d'):
+                signature = f'public static {method}(Landroid/content/Context;)[B'
+                if f'.method {signature}' not in data:
+                    raise ValueError('COS17 Melody signature-hash API mismatch')
+                data = _replace_smali_method(data, signature, key_body)
+            data = _replace_smali_method(data, 'public static e(Landroid/content/Context;)Z', lspatch_body)
+            smali.write_text(data, encoding='utf-8')
+            patched += 1
             continue
         data = _replace_smali_method(data, 'public static b(Lcom/oplus/melody/MelodyApplication;)[B', key_body)
         data = _replace_smali_method(data, 'public static c(Lcom/oplus/melody/MelodyApplication;)[B', key_body)
         data = _replace_smali_method(data, 'public static d(Lcom/oplus/melody/MelodyApplication;)Z', lspatch_body)
         smali.write_text(data, encoding='utf-8')
+        patched += 1
+    if patched != 1:
+        raise ValueError(f'Melody RepackagingDetector not matched exactly once: {patched}')
 
 
 def blob_fixup_oplus_camera_framework_shims(ctx, file, file_path, *args, tmp_dir=None, **kwargs):
@@ -5753,6 +5953,15 @@ def blob_fixup_camera_unit_sdk_runtime(ctx, file, file_path, *args, tmp_dir=None
         smali.write_text(fixed, encoding='utf-8')
 
 
+def blob_fixup_camera_sdk_versioned_patch(ctx, file, file_path, *args, tmp_dir=None, **kwargs):
+    if tmp_dir is None:
+        raise ValueError('Camera SDK patch requires an unpacked SDK')
+    patch_dir = 'patches-sdk'
+    if sha256(Path(file_path).read_bytes()).hexdigest() == '9455da1d83d68958f1867a7ef281e0ca310f6f0f5a79297f68e656462b3eb444':
+        patch_dir = 'patches-sdk-cos17'
+    blob_fixup().patch_impl(patch_dir, ctx, file, file_path, tmp_dir=tmp_dir)
+
+
 def blob_fixup_camera_unit_facebeauty_probe_path(ctx, file, file_path, *args, tmp_dir=None, **kwargs):
     # Re-point the guarded ProductJni probe from /product/lib64 to /system_ext/lib64.
     if tmp_dir is None:
@@ -5779,6 +5988,10 @@ def blob_fixup_nativewinbuff_android17(ctx, file, file_path, *args, **kwargs):
     path = Path(file_path)
     blob = path.read_bytes()
     actual_sha256 = sha256(blob).hexdigest()
+    # Verified COS 17.0.0.102 stock binary already passes sp<Fence> in x3
+    # in both releaseBuffer calls. Do not apply the old A16 offsets to it.
+    if actual_sha256 == '30ec27d53ec498ac2e738f1c02decfb065667b9253d276a3d4abaa048c23c478':
+        return
     if actual_sha256 == patched_sha256:
         return
     if actual_sha256 != stock_sha256:
@@ -5808,14 +6021,24 @@ def blob_fixup_apsclient_force_java_heif(ctx, file, file_path, *args, **kwargs):
     path = Path(file_path)
     blob = path.read_bytes()
     actual_sha256 = sha256(blob).hexdigest()
-    if actual_sha256 != APSCLIENT_STOCK_SHA256:
+    expected_stock = APSCLIENT_STOCK_SHA256
+    expected_patched = APSCLIENT_PATCHED_SHA256
+    dlopen_targets = APSCLIENT_HEIF_DLOPEN_TARGETS
+    if actual_sha256 == '0b5b49ae8845983f178279fe252c4aef8476d99b1f9470a7ead98e9095c3df39':
+        expected_stock = actual_sha256
+        expected_patched = 'db43c7391dc2d5bc26d1c09b47b008488a2393cea1c0df909737a72e688c6419'
+        dlopen_targets = (
+            (0x4F418, b'libHeifEncoderWrapper.so', b'xibHeifEncoderWrapper.so'),
+            (0x4BE60, b'libNativeWinBuffExchange.so', b'xibNativeWinBuffExchange.so'),
+        )
+    if actual_sha256 != expected_stock:
         raise ValueError(
             'APS client SHA-256 mismatch: '
-            f'expected {APSCLIENT_STOCK_SHA256}, found {actual_sha256}'
+            f'expected {expected_stock}, found {actual_sha256}'
         )
 
     patched = bytearray(blob)
-    for offset, expected, replacement in APSCLIENT_HEIF_DLOPEN_TARGETS:
+    for offset, expected, replacement in dlopen_targets:
         end = offset + len(expected)
         if blob[offset:end] != expected:
             raise ValueError(
@@ -5826,10 +6049,10 @@ def blob_fixup_apsclient_force_java_heif(ctx, file, file_path, *args, **kwargs):
 
     result = bytes(patched)
     patched_sha256 = sha256(result).hexdigest()
-    if patched_sha256 != APSCLIENT_PATCHED_SHA256:
+    if patched_sha256 != expected_patched:
         raise ValueError(
             'patched APS client SHA-256 mismatch: '
-            f'expected {APSCLIENT_PATCHED_SHA256}, found {patched_sha256}'
+            f'expected {expected_patched}, found {patched_sha256}'
         )
     path.write_bytes(result)
 
@@ -5840,6 +6063,7 @@ lib_fixups: lib_fixups_user_type = {
     # lib_to_package_fixup_clang_rt_ubsan_standalone and
     # lib_to_package_fixup_proto_3_9_1 — no need to add them explicitly.
     **lib_fixups,
+    'vendor.oplus.hardware.charger-V11-ndk': lib_fixup_stock_charger,
     (
         'libSuperTextWrapper',
         'libXDocProcessSDK',
@@ -5854,6 +6078,29 @@ def blob_fixup_filemanager_cut_skip_k0_when_same_disk(ctx, file, file_path, *arg
         return
     smali = Path(tmp_dir) / 'smali' / 'com' / 'filemanager' / 'fileoperate' / 'cut' / 'FileActionCut.smali'
     data = smali.read_text(encoding='utf-8')
+    if '.method public final K0()Z' not in data:
+        # COS17: Y is computed by cut/m.j(source,dest) in V(), and the Y=true
+        # branch uses the same-volume move. O0 is the renamed cross-device
+        # dialog check; retain its entire original body for cross-volume moves.
+        anchors = (
+            'Lcom/filemanager/fileoperate/cut/FileActionCut;->Y:Z',
+            '.method public final O0()Z\n    .locals 5\n',
+            'Lcom/filemanager/fileoperate/cut/m;->j(Ljava/util/List;Ljava/lang/String;)Z',
+        )
+        if not all(anchor in data for anchor in anchors):
+            raise ValueError('COS17 FileActionCut same-volume mapping mismatch')
+        anchor = anchors[1]
+        extra = (
+            '\n    iget-boolean v0, p0, Lcom/filemanager/fileoperate/cut/FileActionCut;->Y:Z\n'
+            '    if-eqz v0, :codex_cos17_cross_volume\n'
+            '    const/4 v0, 0x0\n'
+            '    return v0\n'
+            '    :codex_cos17_cross_volume\n'
+        )
+        if data.count(anchor) != 1:
+            raise ValueError('COS17 FileActionCut O0 method is not unique')
+        smali.write_text(data.replace(anchor, anchor + extra, 1), encoding='utf-8')
+        return
     # K0() checks whether a cross-device move dialog is needed, but on LineageOS
     # it crashes silently (swallowed by the thread pool) before logging anything.
     # V:Z is already set true in V() when source and dest are on the same volume,
@@ -5887,6 +6134,10 @@ def blob_fixup_filemanager_select_dir_current_path_fallback(ctx, file, file_path
     if tmp_dir is None:
         return
     smali = Path(tmp_dir) / 'smali_classes3' / 'com' / 'oplus' / 'selectdir' / 'SelectDirPathPanelFragment.smali'
+    cos17 = False
+    if not smali.exists():
+        smali = Path(tmp_dir) / 'smali_classes4/com/oplus/selectdir/SelectDirPathPanelFragment.smali'
+        cos17 = True
     data = smali.read_text(encoding='utf-8')
     log_anchor = '    const-string v4, "selectButton click -> select path:"\n'
     button_anchor = '    iget-object p1, p0, Lcom/oplus/selectdir/SelectDirPathPanelFragment;->mSelectButton:Lcom/coui/appcompat/button/COUIButton;\n'
@@ -5910,6 +6161,10 @@ def blob_fixup_filemanager_select_dir_current_path_fallback(ctx, file, file_path
         '    iput-object v0, v1, Lkotlin/jvm/internal/Ref$ObjectRef;->element:Ljava/lang/Object;\n'
         '    :cond_pathbar_skip\n'
     )
+    if cos17:
+        new = new.replace('Lkotlin/collections/p;', 'Lkotlin/collections/n;')
+        if 'Lkotlin/collections/n;->e(Ljava/lang/Object;)Ljava/util/List;' not in data:
+            raise ValueError('COS17 SelectDir collection helper mismatch')
     log_idx = data.find(log_anchor)
     button_idx = data.find(button_anchor, log_idx)
     if log_idx == -1 or button_idx == -1:
@@ -5942,6 +6197,10 @@ def blob_fixup_filemanager_superapp_zip_preview(ctx, file, file_path, *args, tmp
     if tmp_dir is None:
         return
     smali = Path(tmp_dir) / 'smali' / 'com' / 'filemanager' / 'superapp' / 'ui' / 'superapp' / 'SuperListFragment$n.smali'
+    cos17 = False
+    if not smali.exists():
+        smali = Path(tmp_dir) / 'smali_classes2/com/filemanager/superapp/ui/superapp/SuperListFragment$onItemClickOrDoubleClick$1$1$1.smali'
+        cos17 = True
     data = smali.read_text(encoding='utf-8')
     if 'SuperApp archive preview direct' in data:
         return
@@ -5985,6 +6244,19 @@ def blob_fixup_filemanager_superapp_zip_preview(ctx, file, file_path, *args, tmp
         '    :cond_superapp_archive_skip\n'
         '\n'
     )
+    if cos17:
+        anchor = anchor.replace('Lkotlin/a;', 'Lkotlin/b;')
+        insert = (insert
+            .replace('Lkotlin/a;', 'Lkotlin/b;')
+            .replace('SuperListFragment$n;', 'SuperListFragment$onItemClickOrDoubleClick$1$1$1;')
+            .replace('->i:Lcom/filemanager/common/base/c;', '->$baseFile:Lcom/filemanager/common/base/BaseFileBean;')
+            .replace('->l:Landroidx/fragment/app/FragmentActivity;', '->$it:Landroidx/fragment/app/FragmentActivity;')
+            .replace('Lcom/filemanager/common/base/c;', 'Lcom/filemanager/common/base/BaseFileBean;')
+            .replace('->t()I', '->u()I')
+            .replace('Lcom/filemanager/common/utils/g2;', 'Lcom/filemanager/common/utils/u3;')
+            .replace('Le8/a;', 'Li9/a;')
+            .replace('->h(Landroid/app/Activity;', '->g(Landroid/app/Activity;')
+            .replace('Lht/m;', 'Liu/g;'))
     if anchor not in data:
         raise ValueError('FileManager SuperListFragment archive click anchor not found')
     data = data.replace(anchor, insert, 1)
@@ -5995,8 +6267,16 @@ def blob_fixup_filemanager_skip_osense_scene_actions(ctx, file, file_path, *args
     if tmp_dir is None:
         return
     smali = Path(tmp_dir) / 'smali' / 'u6' / 'b.smali'
+    cos17 = False
+    if not smali.exists() or '.method public static final f(Ljava/lang/String;I)V' not in smali.read_text(encoding='utf-8'):
+        smali = Path(tmp_dir) / 'smali/y7/e.smali'
+        cos17 = True
     data = smali.read_text(encoding='utf-8')
     signature = 'public static final f(Ljava/lang/String;I)V'
+    if cos17:
+        signature = 'public static final k(Ljava/lang/String;I)V'
+        if '"setSceneAction return, isAosp"' not in data:
+            raise ValueError('COS17 FileManager PerformanceManager identity mismatch')
     body = (
         '    .locals 2\n'
         '\n'
@@ -6012,6 +6292,8 @@ def blob_fixup_filemanager_skip_osense_scene_actions(ctx, file, file_path, *args
         '\n'
         '    return-void\n'
     )
+    if cos17:
+        body = body.replace('Lcom/filemanager/common/utils/g2;', 'Lcom/filemanager/common/utils/u3;')
     fixed = _replace_smali_method(data, signature, body)
     if fixed == data:
         raise ValueError('FileManager PerformanceManager.f() method not found')
@@ -6024,6 +6306,18 @@ def blob_fixup_filemanager_safecheck_direct(ctx, file, file_path, *args, tmp_dir
     smali = Path(tmp_dir) / 'smali' / 'com' / 'filemanager' / 'common' / 'fileutils' / 'e.smali'
     data = smali.read_text(encoding='utf-8')
     signature = 'public final x(Lvt/a;Ljava/lang/Object;)Ljava/lang/Object;'
+    cos17 = False
+    if f'.method {signature}' not in data:
+        smali = Path(tmp_dir) / 'smali/com/filemanager/common/fileutils/JavaFileHelper.smali'
+        data = smali.read_text(encoding='utf-8')
+        signature = 'public final x(Ltu/a;Ljava/lang/Object;)Ljava/lang/Object;'
+        if not all(anchor in data for anchor in (
+            f'.method {signature}', '"safeCheck start"',
+            'Lcom/filemanager/common/fileutils/JavaFileHelper$safeCheck$1;',
+            'Lcom/filemanager/common/utils/u3;->b',
+        )):
+            raise ValueError('COS17 FileManager safeCheck structure mismatch')
+        cos17 = True
     body = (
         '    .locals 3\n'
         '\n'
@@ -6077,6 +6371,10 @@ def blob_fixup_filemanager_safecheck_direct(ctx, file, file_path, *args, tmp_dir
         '\n'
         '    return-object p2\n'
     )
+    if cos17:
+        body = body.replace('Lvt/a;', 'Ltu/a;').replace(
+            'Lcom/filemanager/common/utils/g2;', 'Lcom/filemanager/common/utils/u3;'
+        )
     fixed = _replace_smali_method(data, signature, body)
     if fixed == data:
         raise ValueError('FileManager JavaFileHelper.safeCheck method not found')
@@ -6084,6 +6382,18 @@ def blob_fixup_filemanager_safecheck_direct(ctx, file, file_path, *args, tmp_dir
 
 
 blob_fixups: blob_fixups_user_type = {
+    'product/priv-app/AIMemory/AIMemory.apk': blob_fixup()
+        .call(blob_fixup_apktool_unpack_full)
+        .call(blob_fixup_coui_material_capabilities)
+        .call(blob_fixup_aimemory_secure_settings_permission)
+        .apktool_pack()
+        .stripzip(),
+    'system_ext/app/OplusAppFeature/OplusAppFeature.apk': blob_fixup()
+        .call(blob_fixup_appfeature_provider)
+        .stripzip(),
+    'odm/lib64/hw/camera.oemlayer.v2.so': blob_fixup()
+        .replace_needed('vendor.oplus.hardware.charger-V11-ndk.so',
+                        'vendor.oplus.hardware.charger-V11-ndk_stock.so'),
     'system_ext/lib64/libNativeWinBuffExchange.so': blob_fixup()
         .call(blob_fixup_nativewinbuff_android17),
     # The stock camera extension has no dynamic imports from provider-V3 or
@@ -6095,12 +6405,13 @@ blob_fixups: blob_fixups_user_type = {
         .call(blob_fixup_apsclient_force_java_heif),
     'system_ext/framework/com.oplus.camera.unit.sdk.jar': blob_fixup()
         .apktool_unpack('patches-sdk')
-        .patch_dir('patches-sdk')
+        .call(blob_fixup_camera_sdk_versioned_patch)
         .call(blob_fixup_camera_unit_facebeauty_probe_path)
         .apktool_pack()
         .stripzip(),
     'system_ext/priv-app/OplusCamera/OplusCamera.apk': blob_fixup()
         .call(blob_fixup_apktool_unpack_full)
+        .call(blob_fixup_coui_material_capabilities)
         .call(blob_fixup_opluscamera_font)
         .call(blob_fixup_opluscamera_blur_seginit_guard)
         .call(blob_fixup_strip_oem_permissions)
@@ -6114,6 +6425,7 @@ blob_fixups: blob_fixups_user_type = {
         .stripzip(),
     'system_ext/priv-app/OppoGallery2/OppoGallery2.apk': blob_fixup()
         .call(blob_fixup_apktool_unpack_full)
+        .call(blob_fixup_coui_material_capabilities)
         .call(blob_fixup_opluscamera_uses_library)
         .call(blob_fixup_oppogallery_op15_native_libs)
         .call(blob_fixup_oppogallery_receiver_flags)
@@ -6133,6 +6445,7 @@ blob_fixups: blob_fixups_user_type = {
         .stripzip(),
     'system_ext/priv-app/PhoneManager/PhoneManager.apk': blob_fixup()
         .call(blob_fixup_apktool_unpack_full)
+        .call(blob_fixup_coui_material_capabilities)
         .call(blob_fixup_opluscamera_uses_library)
         .call(blob_fixup_phonemanager_secure_settings_permission)
         .call(blob_fixup_phonemanager_settings_category)
@@ -6141,6 +6454,7 @@ blob_fixups: blob_fixups_user_type = {
         .stripzip(),
     'system_ext/app/SafeCenter/SafeCenter.apk': blob_fixup()
         .call(blob_fixup_apktool_unpack_full)
+        .call(blob_fixup_coui_material_capabilities)
         .call(blob_fixup_opluscamera_uses_library)
         .call(blob_fixup_safecenter_receiver_flags)
         .call(blob_fixup_safecenter_olock_support)
@@ -6153,7 +6467,8 @@ blob_fixups: blob_fixups_user_type = {
         .apktool_pack()
         .stripzip(),
     'product/priv-app/AIUnit/AIUnit.apk': blob_fixup()
-        .call(blob_fixup_apktool_unpack_manifest)
+        .call(blob_fixup_apktool_unpack_full)
+        .call(blob_fixup_coui_material_capabilities)
         .call(blob_fixup_aiunit_settings_category)
         .call(blob_fixup_aiunit_settings_search)
         .apktool_pack()
@@ -6168,6 +6483,7 @@ blob_fixups: blob_fixups_user_type = {
         .call(blob_fixup_cryptoeng_manifest),
     'system_ext/app/FileManager/FileManager.apk': blob_fixup()
         .call(blob_fixup_apktool_unpack_full)
+        .call(blob_fixup_coui_material_capabilities)
         .call(blob_fixup_opluscamera_uses_library)
         .call(blob_fixup_filemanager_safecheck_direct)
         .call(blob_fixup_filemanager_select_dir_current_path_fallback)
@@ -6203,6 +6519,7 @@ blob_fixups: blob_fixups_user_type = {
         .stripzip(),
     'system_ext/priv-app/FileEncryption/FileEncryption.apk': blob_fixup()
         .call(blob_fixup_apktool_unpack_full)
+        .call(blob_fixup_coui_material_capabilities)
         .call(blob_fixup_opluscamera_uses_library)
         .call(blob_fixup_fileencryption_secure_settings_permission)
         .call(blob_fixup_fileencryption_biometric_enrollment_checks)
