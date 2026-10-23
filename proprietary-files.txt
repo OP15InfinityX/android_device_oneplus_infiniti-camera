@@ -1,5 +1,5 @@
 ## All proprietary files from this list, unless pinned and noted otherwise,
-## are from OnePlus 15 (OxygenOS 16 CPH2745_11_A.01)
+## are from OnePlus 15 (ColorOS 17 CPH2745_17.0.0.102(EX01))
 
 # Camera
 my_product/app/OplusCamera/OplusCamera.apk:system_ext/priv-app/OplusCamera/OplusCamera.apk;OVERRIDES=Camera2,GoogleCameraGo
@@ -52,8 +52,8 @@ my_product/lib64/libjnisingleblur_api.so:system_ext/lib64/libjnisingleblur_api.s
 my_product/lib64/libjnistblur_api.so:system_ext/lib64/libjnistblur_api.so;FIX_SONAME;DISABLE_CHECKELF
 my_product/lib64/libjnistblur_api.so:odm/lib64/libstblur_api.so;DISABLE_CHECKELF
 my_product/lib64/libmpbase.so:system_ext/lib64/libmpbase.so;MODULE_SUFFIX=_system_ext;DISABLE_CHECKELF
-my_product/lib64/libdolbyeffect_4.1.so:system_ext/lib64/libdolbyeffect_4.1.so;DISABLE_CHECKELF
-my_product/lib64/liboplusdolbyeffect_4.1.so:system_ext/lib64/liboplusdolbyeffect_4.1.so;DISABLE_CHECKELF
+my_product/lib64/libdolbyeffect_5.0.so:system_ext/lib64/libdolbyeffect_5.0.so;DISABLE_CHECKELF
+my_product/lib64/liboplusdolbyeffect_5.0.so:system_ext/lib64/liboplusdolbyeffect_5.0.so;DISABLE_CHECKELF
 my_product/lib64/libsingle_camera_bokeh_native.so:system_ext/lib64/libsingle_camera_bokeh_native.so;DISABLE_CHECKELF
 my_product/lib64/libsingle_camera_bokeh2_native.so:system_ext/lib64/libsingle_camera_bokeh2_native.so;DISABLE_CHECKELF
 my_product/lib64/libst_mobile.so:system_ext/lib64/libst_mobile.so;DISABLE_CHECKELF
@@ -61,7 +61,6 @@ my_product/lib64/libst_sticker_jni.so:system_ext/lib64/libst_sticker_jni.so;FIX_
 
 odm/lib64/libOplusSecurity.so
 odm/lib64/libalogencrypt.so
-odm/lib/libalogencrypt.so
 odm/lib64/libarcsoft_hdr_couple_api.so:odm/lib64/libarcsoft_hdr_couple_api_V2.so;DISABLE_CHECKELF
 
 # OP15 camera/QNN runtime assets
@@ -249,15 +248,13 @@ my_stock/priv-app/AIUnit/lib/arm64/libcore_tokenizers.so:product/lib64/libcore_t
 my_stock/priv-app/AIUnit/lib/arm64/libdatastore_shared_counter.so:product/lib64/libdatastore_shared_counter_aiunit.so;MODULE_SUFFIX=_aiunit;DISABLE_DEPS;SYMLINK=product/priv-app/AIUnit/lib/arm64/libdatastore_shared_counter.so
 my_stock/priv-app/AIUnit/lib/arm64/libdmabufheap.so:product/lib64/libdmabufheap_aiunit.so;MODULE_SUFFIX=_aiunit;DISABLE_DEPS;SYMLINK=product/priv-app/AIUnit/lib/arm64/libdmabufheap.so
 my_stock/priv-app/AIUnit/lib/arm64/libopencv_java4.so:product/lib64/libopencv_java4_aiunit.so;MODULE_SUFFIX=_aiunit;DISABLE_DEPS;SYMLINK=product/priv-app/AIUnit/lib/arm64/libopencv_java4.so
-my_stock/app/AIMemory/AIMemory.apk:product/priv-app/AIMemory/AIMemory.apk;PRESIGNED
+my_stock/app/AIMemory/AIMemory.apk:product/priv-app/AIMemory/AIMemory.apk
 my_stock/app/AIMemory/lib/arm64/libaiunit_sdk_core.so:product/lib64/libaiunit_sdk_core_aimemory.so;MODULE_SUFFIX=_aimemory;DISABLE_DEPS;SYMLINK=product/priv-app/AIMemory/lib/arm64/libaiunit_sdk_core.so
-my_stock/app/AIMemory/lib/arm64/libnoise.so:product/lib64/libnoise_aimemory.so;MODULE_SUFFIX=_aimemory;DISABLE_DEPS;SYMLINK=product/priv-app/AIMemory/lib/arm64/libnoise.so
 my_stock/app/AIMemory/lib/arm64/libopluslog.so:product/lib64/libopluslog_aimemory.so;MODULE_SUFFIX=_aimemory;DISABLE_DEPS;SYMLINK=product/priv-app/AIMemory/lib/arm64/libopluslog.so
 my_stock/app/AIMemory/lib/arm64/libscan_engine_decode.so:product/lib64/libscan_engine_decode_aimemory.so;MODULE_SUFFIX=_aimemory;DISABLE_DEPS;SYMLINK=product/priv-app/AIMemory/lib/arm64/libscan_engine_decode.so
 my_stock/app/AIMemory/lib/arm64/libscan_engine_detect.so:product/lib64/libscan_engine_detect_aimemory.so;MODULE_SUFFIX=_aimemory;DISABLE_DEPS;SYMLINK=product/priv-app/AIMemory/lib/arm64/libscan_engine_detect.so
 my_stock/app/AIMemory/lib/arm64/libtensorflowlite.so:product/lib64/libtensorflowlite_aimemory.so;MODULE_SUFFIX=_aimemory;DISABLE_DEPS;SYMLINK=product/priv-app/AIMemory/lib/arm64/libtensorflowlite.so
 my_stock/app/AIMemory/lib/arm64/libwb_tables_549543368749780587_1.so:product/lib64/libwb_tables_549543368749780587_1.so;MODULE_SUFFIX=_aimemory;DISABLE_DEPS;SYMLINK=product/priv-app/AIMemory/lib/arm64/libwb_tables_549543368749780587_1.so
-my_stock/app/AIMemory/lib/arm64/libwbkit-seckit3.so:product/lib64/libwbkit-seckit3.so;MODULE_SUFFIX=_aimemory;DISABLE_DEPS;SYMLINK=product/priv-app/AIMemory/lib/arm64/libwbkit-seckit3.so
 my_product/app/AONService/AONService.apk:product/app/AONService/AONService.apk
 my_product/app/AONService/lib/arm64/libNoTopK.so:product/lib64/libNoTopK.so;MODULE_SUFFIX=_aonservice;DISABLE_DEPS;SYMLINK=product/app/AONService/lib/arm64/libNoTopK.so
 my_product/app/AONService/lib/arm64/libPOSTPROCESS.so:product/lib64/libPOSTPROCESS.so;MODULE_SUFFIX=_aonservice;DISABLE_DEPS;SYMLINK=product/app/AONService/lib/arm64/libPOSTPROCESS.so
@@ -268,10 +265,9 @@ my_product/app/AONService/lib/arm64/libfde.so:product/lib64/libfde.so;MODULE_SUF
 my_product/app/AONService/lib/arm64/libmemoryhelper.so:product/lib64/libmemoryhelper.so;MODULE_SUFFIX=_aonservice;DISABLE_DEPS;SYMLINK=product/app/AONService/lib/arm64/libmemoryhelper.so
 my_product/overlay/aon.frameworkres.overlay.product.apk:product/overlay/aon.frameworkres.overlay.product.apk;EXTRACT_ONLY;FILEGROUP=aon_frameworkres_overlay_apk
 my_stock/app/OpenCapabilityService/OpenCapabilityService.apk:system_ext/app/OpenCapabilityService/OpenCapabilityService.apk
-system_ext/priv-app/StdID/StdID.apk
-my_stock/app/StdSP/StdSP.apk:system_ext/app/StdSP/StdSP.apk
+system_ext/priv-app/StdID/StdID/StdID.apk:system_ext/priv-app/StdID/StdID.apk
+my_stock/priv-app/StdSP/StdSP.apk:system_ext/app/StdSP/StdSP.apk
 my_stock/app/MCS/MCS.apk:system_ext/app/MCS/MCS.apk
-my_stock/app/MCS/lib/arm64/libdcc_cipher.so:system_ext/lib64/libdcc_cipher_mcs.so;MODULE_SUFFIX=_mcs;DISABLE_DEPS;SYMLINK=system_ext/app/MCS/lib/arm64/libdcc_cipher.so
 my_stock/app/MCS/lib/arm64/libheytap_mcs_cipheralgo_fixed.so:system_ext/lib64/libheytap_mcs_cipheralgo_fixed.so;MODULE_SUFFIX=_mcs;DISABLE_DEPS;SYMLINK=system_ext/app/MCS/lib/arm64/libheytap_mcs_cipheralgo_fixed.so
 my_stock/app/MCS/lib/arm64/libmmkv.so:system_ext/lib64/libmmkv_mcs.so;MODULE_SUFFIX=_mcs;DISABLE_DEPS;SYMLINK=system_ext/app/MCS/lib/arm64/libmmkv.so
 my_stock/app/MCS/lib/arm64/liboplus_conscrypt_jni.so:system_ext/lib64/liboplus_conscrypt_jni.so;MODULE_SUFFIX=_mcs;DISABLE_DEPS;SYMLINK=system_ext/app/MCS/lib/arm64/liboplus_conscrypt_jni.so
@@ -280,6 +276,7 @@ my_stock/app/FileEncryption/FileEncryption.apk:system_ext/priv-app/FileEncryptio
 system_ext/app/SecurityPermission/SecurityPermission.apk
 system_ext/app/SafeCenter/SafeCenter.apk
 system/framework/oplus-services.jar;EXTRACT_ONLY
+system/framework/oplus-services.jar:system_ext/app/OplusAppFeature/OplusAppFeature.apk
 system_ext/etc/permissions/vendor-oplus-hardware-cryptoeng.xml
 system_ext/framework/vendor.oplus.hardware.cryptoeng-V1-java.jar
 system_ext/framework/vendor.oplus.hardware.cryptoeng-V1.0-java.jar
@@ -299,12 +296,6 @@ odm/firmware/secure_ta/cryptoeng.b06
 odm/firmware/secure_ta/cryptoeng.b07
 odm/firmware/secure_ta/cryptoeng.b08
 odm/firmware/secure_ta/cryptoeng.mdt
-odm/lib/lib_cryptoeng_api.so;DISABLE_DEPS
-odm/lib/libqsee_keybox_ca.so;DISABLE_DEPS
-odm/lib/vendor.oplus.hardware.fido.fidoca-V1-ndk.so;DISABLE_DEPS
-odm/lib/vendor.oplus.hardware.fido.fido2ca-V1-ndk.so;DISABLE_DEPS
-odm/lib/vendor.oplus.hardware.cryptoeng-V1-ndk.so;MODULE_SUFFIX=_odm;DISABLE_DEPS
-odm/lib/vendor.oplus.hardware.cryptoeng@1.0.so;MODULE_SUFFIX=_odm;DISABLE_DEPS
 odm/lib64/lib_cryptoeng_api.so;DISABLE_DEPS
 odm/lib64/libqsee_keybox_ca.so;DISABLE_DEPS
 odm/lib64/vendor.oplus.hardware.fido.fidoca-V1-ndk.so;DISABLE_DEPS
@@ -326,3 +317,6 @@ odm/lib64/hw/camera.oemlayer.v2.so
 system_ext/lib64/libbsproxy.so
 system_ext/lib64/libcsextimpl.so;DISABLE_CHECKELF
 system_ext/lib64/vendor.oplus.hardware.cameraMDM@1.0.so
+
+# COS 17 additions: new camera assets and verified runtime dependencies
+my_stock/app/AIMemory/lib/arm64/libomas-wbkit-c.so:product/lib64/libomas-wbkit-c_aimemory.so;MODULE_SUFFIX=_aimemory;DISABLE_DEPS;SYMLINK=product/priv-app/AIMemory/lib/arm64/libomas-wbkit-c.so

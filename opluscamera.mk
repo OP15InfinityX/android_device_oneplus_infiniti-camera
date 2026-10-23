@@ -37,6 +37,7 @@ PRODUCT_DEX_PREOPT_MODULE_CONFIGS += oplus-services=disable
 PRODUCT_COPY_FILES += \
     $(OPLUS_CAMERA_PATH)/configs/init/init.oplus.camera_rus.rc:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/init/init.oplus.camera_rus.rc \
     $(OPLUS_CAMERA_PATH)/configs/extension/com.oplus.app-features.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/extension/com.oplus.app-features.xml \
+    $(OPLUS_CAMERA_PATH)/configs/permissions/privapp-permissions-oplus-aimemory.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/permissions/privapp-permissions-oplus-aimemory.xml \
     $(OPLUS_CAMERA_PATH)/configs/permissions/default-permissions-com.aiunit.aon.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/default-permissions/default-permissions-com.aiunit.aon.xml \
     $(OPLUS_CAMERA_PATH)/configs/permissions/default-permissions-com.oplus.melody.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/default-permissions/default-permissions-com.oplus.melody.xml \
     $(OPLUS_CAMERA_PATH)/configs/permissions/com.oplus.android-features.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/com.oplus.android-features.xml \
@@ -78,12 +79,12 @@ PRODUCT_PRODUCT_PROPERTIES += \
     persist.sys.feature.uhdr.support=true \
     persist.sys.oplus.anim_level=1 \
     persist.sys.camera.private.log.enable=debug,pre,mp \
-    ro.build.version.module.sub_api=2 \
-    ro.build.version.oplus.api=38 \
-    ro.build.version.oplus.sub_api=47 \
-    ro.build.version.oplusrom=V16.1.0 \
-    ro.build.version.oplusrom.display=16.0.8 \
-    ro.build.version.oplusrom.confidential=V16.1.0 \
+    ro.build.version.module.sub_api=1 \
+    ro.build.version.oplus.api=40 \
+    ro.build.version.oplus.sub_api=23 \
+    ro.build.version.oplusrom=V17.0.0 \
+    ro.build.version.oplusrom.display=17.0 \
+    ro.build.version.oplusrom.confidential=V17.0.0 \
     ro.com.google.lens.oem_camera_package=com.oplus.camera \
     ro.com.google.lens.oem_image_package=com.oneplus.gallery,com.oplus.screenshot \
     ro.camerax.extensions.enabled=true \
