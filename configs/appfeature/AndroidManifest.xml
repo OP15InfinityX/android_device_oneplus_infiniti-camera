@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Isolate COS17's original AppFeature provider from the stock system_server JAR. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.oplus.appfeature" android:versionCode="1" android:versionName="17.0">
+    <uses-sdk android:minSdkVersion="35" android:targetSdkVersion="37" />
+    <application android:label="OPlus App Features" android:allowBackup="false"
+        android:directBootAware="true" android:defaultToDeviceProtectedStorage="true">
+        <provider android:name="com.oplus.customize.appfeature.configprovider.AppFeatureProvider"
+            android:authorities="com.oplus.customize.coreapp.configmanager.configprovider.AppFeatureProvider"
+            android:exported="true" android:directBootAware="true" android:initOrder="102"
+            android:writePermission="oplus.permission.OPLUS_COMPONENT_SAFE" />
+    </application>
+</manifest>
