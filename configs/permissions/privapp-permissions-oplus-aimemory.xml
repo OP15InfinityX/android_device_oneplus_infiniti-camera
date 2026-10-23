@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<permissions>
+    <!-- Mind Space persists the user's consent state in Settings.Secure. -->
+    <privapp-permissions package="com.oplus.aimemory">
+        <permission name="android.permission.WRITE_SECURE_SETTINGS"/>
+    </privapp-permissions>
+</permissions>
