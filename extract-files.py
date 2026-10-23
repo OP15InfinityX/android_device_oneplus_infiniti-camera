@@ -29,6 +29,7 @@ import sys
 sys.path.append(str(Path(__file__).resolve().parents[3] / 'hardware/oplus/extract-utils-ext'))
 from extract_utils_oplus.coui_material import (blob_fixup_coui_material_capabilities, blob_fixup_coui_unpack_sources)
 from appfeature_provider import blob_fixup_appfeature_provider
+from private_safe import blob_fixup_private_safe_unlock_dialog
 from runtime_capabilities import (
     blob_fixup_gallery_backlight_capability,
     blob_fixup_camera_result_capabilities,
@@ -6529,6 +6530,7 @@ blob_fixups: blob_fixups_user_type = {
         .call(blob_fixup_opluscamera_uses_library)
         .call(blob_fixup_fileencryption_secure_settings_permission)
         .call(blob_fixup_fileencryption_biometric_enrollment_checks)
+        .call(blob_fixup_private_safe_unlock_dialog)
         .call(blob_fixup_oplus_camera_system_properties)
         .apktool_pack()
         .stripzip(),
