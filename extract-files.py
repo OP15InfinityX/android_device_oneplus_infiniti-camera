@@ -30,6 +30,7 @@ sys.path.append(str(Path(__file__).resolve().parents[3] / 'hardware/oplus/extrac
 from extract_utils_oplus.coui_material import (blob_fixup_coui_material_capabilities, blob_fixup_coui_unpack_sources)
 from appfeature_provider import blob_fixup_appfeature_provider
 from private_safe import blob_fixup_private_safe_unlock_dialog
+from phonemanager_compat import blob_fixup_phonemanager_oplus_log
 from filemanager_compat import (
     blob_fixup_filemanager_atlas_debug_log,
     blob_fixup_filemanager_text_metrics,
@@ -6461,6 +6462,7 @@ blob_fixups: blob_fixups_user_type = {
         .call(blob_fixup_phonemanager_secure_settings_permission)
         .call(blob_fixup_phonemanager_settings_category)
         .call(blob_fixup_phonemanager_permission_controller_package)
+        .call(blob_fixup_phonemanager_oplus_log)
         .apktool_pack()
         .stripzip(),
     'system_ext/app/SafeCenter/SafeCenter.apk': blob_fixup()
