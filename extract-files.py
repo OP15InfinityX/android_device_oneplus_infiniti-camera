@@ -1279,23 +1279,20 @@ def blob_fixup_oppogallery_hide_google_photos_backup_settings(ctx, file, file_pa
         field = 'Lcom/oplus/gallery/settingpage/SettingsActivity$SettingFragment;->l:Landroidx/preference/PreferenceScreen;'
         if method is None or field not in method[0]:
             raise ValueError('COS17 Gallery settings initialization mismatch')
-        # Remove entries only after initialization, not while the app is still
-        # resolving preferences and installing their listeners.
-        cleanup = f'    iget-object v0, p0, {field}\n'
-        cleanup += '    if-eqz v0, :codex_cos17_backup_hidden_RETURN\n'
+        # At the returns, p0 has been reused for a String or a receiver.
+        # Insert before that reuse, after the preferences have been initialized.
+        marker = ('    new-instance p0, '
+                  'Lcom/oplus/gallery/foundation/uikit/lifecycle/LocalBroadcastRegister;\n')
+        if method[0].count(marker) != 1 or re.search(r'\bv[56]\b', method[0].split(marker, 1)[1]):
+            raise ValueError('COS17 Gallery settings cleanup insertion point mismatch')
+        cleanup = f'    iget-object v5, p0, {field}\n'
+        cleanup += '    if-eqz v5, :codex_cos17_backup_hidden_done\n'
         for key in ('pref_category_key_cloud_sync','pref_category_cloud_sync_key',
                     'pref_key_auto_sync_2','pref_category_key_cloud_storage_space'):
-            cleanup += (f'    const-string v1, "{key}"\n'
-                        '    invoke-virtual {v0, v1}, Landroidx/preference/PreferenceGroup;->removePreferenceRecursively(Ljava/lang/CharSequence;)Z\n')
-        cleanup += '    :codex_cos17_backup_hidden_RETURN\n'
-        count = 0
-        def before_return(match):
-            nonlocal count
-            count += 1
-            return cleanup.replace('RETURN', str(count)) + match[0]
-        fixed_method = re.sub(r'(?m)^    return-void\n', before_return, method[0])
-        if count == 0:
-            raise ValueError('COS17 Gallery settings return not found')
+            cleanup += (f'    const-string v6, "{key}"\n'
+                        '    invoke-virtual {v5, v6}, Landroidx/preference/PreferenceGroup;->removePreferenceRecursively(Ljava/lang/CharSequence;)Z\n')
+        cleanup += '    :codex_cos17_backup_hidden_done\n\n'
+        fixed_method = method[0].replace(marker, cleanup + marker, 1)
         fragment.write_text(data[:method.start()] + fixed_method + data[method.end():], encoding='utf-8')
         return
 
