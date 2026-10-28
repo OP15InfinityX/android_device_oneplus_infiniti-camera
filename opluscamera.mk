@@ -123,6 +123,10 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.vendor.oplus.camera.backCamSize=50MP+50MP+50MP \
     ro.vendor.oplus.camera.frontCamSize=32MP
 
+# COS17 APS must not retain completed RAW jobs for debugging on custom builds.
+PRODUCT_VENDOR_PROPERTIES += \
+    vendor.oplus.camera.debug.keep_raw_data=0
+
 PRODUCT_SYSTEM_EXT_PROPERTIES += \
     ro.build.version.oplus.api=38 \
     ro.build.version.oplus.sub_api=47 \
