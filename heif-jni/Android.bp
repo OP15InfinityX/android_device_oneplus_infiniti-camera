@@ -1,0 +1,17 @@
+// SPDX-License-Identifier: Apache-2.0
+cc_library_shared {
+    name: "libHeifWinBufExchg-jni",
+    srcs: ["HeifWinBufExchangeJni.cpp"],
+    header_libs: ["jni_headers"],
+    shared_libs: [
+        "//vendor/oneplus/infiniti-camera:libHeifEncoderWrapper",
+        "//vendor/oneplus/infiniti-camera:libNativeWinBuffExchange",
+    ],
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+    stl: "none",
+    compile_multilib: "64",
+    system_ext_specific: true,
+}

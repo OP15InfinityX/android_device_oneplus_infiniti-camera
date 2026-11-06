@@ -39,6 +39,7 @@ from runtime_capabilities import (
     blob_fixup_gallery_backlight_capability,
     blob_fixup_camera_result_capabilities,
 )
+from heif_compat import blob_fixup_camera_heif_completion
 
 
 APSCLIENT_STOCK_SHA256 = 'b6669463a2dbdc22d20d0bb1a565ef9f1cc058f5f34c627a8d49971f7c509bec'
@@ -6430,6 +6431,7 @@ blob_fixups: blob_fixups_user_type = {
         .call(blob_fixup_camera_sdk_versioned_patch)
         .call(blob_fixup_camera_unit_facebeauty_probe_path)
         .call(blob_fixup_camera_result_capabilities)
+        .call(blob_fixup_camera_heif_completion)
         .apktool_pack()
         .stripzip(),
     'system_ext/priv-app/OplusCamera/OplusCamera.apk': blob_fixup()
