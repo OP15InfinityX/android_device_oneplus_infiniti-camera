@@ -1,0 +1,124 @@
+{
+  "package": "com.oplus.melody",
+  "version_name": "17.6.6",
+  "version_code": 17006006,
+  "base_source": "Google Play, captured from installation session 526886437 on 2026-10-23",
+  "complete_bundle_source": "https://d.apkpure.net/b/XAPK/com.oplus.melody?version=latest",
+  "bundle_base_identical_to_google_play": true,
+  "original_apks": [
+    {
+      "file": "com.oplus.melody.apk",
+      "sha256": "ed75c8f4ad06ebdb2100477b6db75c49931c2514127f390b259b6bff8c768641",
+      "official_signer": "c9305ee38a28e5ee0e469b7f66164af4dc680d6141b8f56a090e6de25578b651"
+    },
+    {
+      "file": "config.ar.apk",
+      "sha256": "0d81e7ba67ba92b6287ea7a53cf78cf78c75d42d4e6ca4b139d625cf474feffd",
+      "official_signer": "c9305ee38a28e5ee0e469b7f66164af4dc680d6141b8f56a090e6de25578b651"
+    },
+    {
+      "file": "config.arm64_v8a.apk",
+      "sha256": "e0150981377a8c2e2447a077d800292da9adf0a581cbf92858adb2a4f561cb94",
+      "official_signer": "c9305ee38a28e5ee0e469b7f66164af4dc680d6141b8f56a090e6de25578b651"
+    },
+    {
+      "file": "config.de.apk",
+      "sha256": "c2a85d525813b4dbcc6718804ca1519fbba507d93a41c0c8eda207d01d15bc8a",
+      "official_signer": "c9305ee38a28e5ee0e469b7f66164af4dc680d6141b8f56a090e6de25578b651"
+    },
+    {
+      "file": "config.en.apk",
+      "sha256": "370a0994b997d8d4bb6cdf04770a83a090e27ccf52ba6b5168527b08b5fd70f9",
+      "official_signer": "c9305ee38a28e5ee0e469b7f66164af4dc680d6141b8f56a090e6de25578b651"
+    },
+    {
+      "file": "config.es.apk",
+      "sha256": "26cb2b26145a715cea62d8d7aa5ff48095e59f967bdeb50de57ae0dc4006da0d",
+      "official_signer": "c9305ee38a28e5ee0e469b7f66164af4dc680d6141b8f56a090e6de25578b651"
+    },
+    {
+      "file": "config.fr.apk",
+      "sha256": "ceb5f8f282b7a07a8b751e024b95671c657e54fa9612f96972d432256f0a44f8",
+      "official_signer": "c9305ee38a28e5ee0e469b7f66164af4dc680d6141b8f56a090e6de25578b651"
+    },
+    {
+      "file": "config.hi.apk",
+      "sha256": "fdeff7617a8979fc92da86cb7d229a1f44db85d733e314044fbd35a455d5a558",
+      "official_signer": "c9305ee38a28e5ee0e469b7f66164af4dc680d6141b8f56a090e6de25578b651"
+    },
+    {
+      "file": "config.in.apk",
+      "sha256": "72f5dd302e8548f9093cc1530c4ff2c15aec9fbff94252ff92ae7ae59d82fd3c",
+      "official_signer": "c9305ee38a28e5ee0e469b7f66164af4dc680d6141b8f56a090e6de25578b651"
+    },
+    {
+      "file": "config.it.apk",
+      "sha256": "d73fbfde9c607bb39ef2fb6852413cedc541738da6fb86d6654966990f16db94",
+      "official_signer": "c9305ee38a28e5ee0e469b7f66164af4dc680d6141b8f56a090e6de25578b651"
+    },
+    {
+      "file": "config.ja.apk",
+      "sha256": "b35242bac0a317d7bef548e1c4cb07f628f932cd7259880d6125276fff2ae8ed",
+      "official_signer": "c9305ee38a28e5ee0e469b7f66164af4dc680d6141b8f56a090e6de25578b651"
+    },
+    {
+      "file": "config.ko.apk",
+      "sha256": "0c62770fcbbf949a218179f252ab4aa8398301328a7623afd92797dd4502105f",
+      "official_signer": "c9305ee38a28e5ee0e469b7f66164af4dc680d6141b8f56a090e6de25578b651"
+    },
+    {
+      "file": "config.my.apk",
+      "sha256": "88386a26f72f1df03124cdf7ca09a6e6dd95b920a486d9db76bf14202cb6e7c7",
+      "official_signer": "c9305ee38a28e5ee0e469b7f66164af4dc680d6141b8f56a090e6de25578b651"
+    },
+    {
+      "file": "config.pt.apk",
+      "sha256": "b214c0dd50d4ae9625eceb97f4db9842812590468ea255e829a9c9e02d29805b",
+      "official_signer": "c9305ee38a28e5ee0e469b7f66164af4dc680d6141b8f56a090e6de25578b651"
+    },
+    {
+      "file": "config.ru.apk",
+      "sha256": "12ef6360994ca8b81315148ed935759b23b8c7f6f29cf40e640f605e40801571",
+      "official_signer": "c9305ee38a28e5ee0e469b7f66164af4dc680d6141b8f56a090e6de25578b651"
+    },
+    {
+      "file": "config.th.apk",
+      "sha256": "bb577855ef13d1b83688cf127f8bebf4ceccf8b07a4a2cf041b459fe74dd9e47",
+      "official_signer": "c9305ee38a28e5ee0e469b7f66164af4dc680d6141b8f56a090e6de25578b651"
+    },
+    {
+      "file": "config.tr.apk",
+      "sha256": "0081f83dc09391446c920376b13fc67fa27b0b9325a9081305292904f150f077",
+      "official_signer": "c9305ee38a28e5ee0e469b7f66164af4dc680d6141b8f56a090e6de25578b651"
+    },
+    {
+      "file": "config.vi.apk",
+      "sha256": "f63921007f7b18cedcc3f8d1b6657d0ad717d9fc9f6a67e05341e864de6b6e03",
+      "official_signer": "c9305ee38a28e5ee0e469b7f66164af4dc680d6141b8f56a090e6de25578b651"
+    },
+    {
+      "file": "config.xxhdpi.apk",
+      "sha256": "df6142136f5290eb8c00582760f868b3b6120def4b5632ce6b2c78c3ffd28f4f",
+      "official_signer": "c9305ee38a28e5ee0e469b7f66164af4dc680d6141b8f56a090e6de25578b651"
+    },
+    {
+      "file": "config.zh.apk",
+      "sha256": "4f9804cf5df83294b00b25559cb81420c325a8a098588691a7c3df0defaf1012",
+      "official_signer": "c9305ee38a28e5ee0e469b7f66164af4dc680d6141b8f56a090e6de25578b651"
+    }
+  ],
+  "merger": {
+    "project": "https://github.com/REAndroid/APKEditor",
+    "version": "1.4.9",
+    "jar_sha256": "a9cd40df818845456be6d696de6110c89edf4b0a0580cb83438ed6b25a366e67",
+    "command": "java -jar APKEditor.jar m -i bundle-apks -o Melody-17.6.6-unpatched.apk"
+  },
+  "merged_unpatched_sha256": "fe57c0765bccdd28d5fa5155ae7ed5ddc4926a3f16d8ef75d20f6f81331ccbe0",
+  "whitelist_validation": {
+    "key_sha256": "b0a9bbfc05eee5e7d0a2c97c030586e15bb3301152078f54473bb82df6d8c818",
+    "nonce_bytes": 12,
+    "json_type": "dict",
+    "entries": 5,
+    "plaintext_sha256": "5e1c280f712618a5502efd53d07ff3790c0911488f54dd0ad3701b5c29b3b07e"
+  }
+}
