@@ -40,6 +40,7 @@ from runtime_capabilities import (
     blob_fixup_camera_result_capabilities,
 )
 from heif_compat import blob_fixup_camera_heif_completion
+from stdsp_compat import blob_fixup_stdsp_frozen_capabilities
 
 
 APSCLIENT_STOCK_SHA256 = 'b6669463a2dbdc22d20d0bb1a565ef9f1cc058f5f34c627a8d49971f7c509bec'
@@ -6520,6 +6521,12 @@ blob_fixups: blob_fixups_user_type = {
         .call(blob_fixup_filemanager_copycut_skip_osense_scene)
         .call(blob_fixup_filemanager_superapp_zip_preview)
         .call(blob_fixup_filemanager_skip_osense_scene_actions)
+        .apktool_pack()
+        .stripzip(),
+    'system_ext/app/StdSP/StdSP.apk': blob_fixup()
+        .call(blob_fixup_apktool_unpack_src)
+        .call(blob_fixup_coui_material_capabilities)
+        .call(blob_fixup_stdsp_frozen_capabilities)
         .apktool_pack()
         .stripzip(),
     'system_ext/app/Melody/Melody.apk': blob_fixup()
