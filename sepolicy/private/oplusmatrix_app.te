@@ -1,0 +1,7 @@
+typeattribute oplusmatrix_app coredomain;
+app_domain(oplusmatrix_app)
+net_domain(oplusmatrix_app)
+bluetooth_domain(oplusmatrix_app)
+platform_app_domain(oplusmatrix_app)
+
+allow oplusmatrix_app same_process_hal_file:file { getattr open read map };

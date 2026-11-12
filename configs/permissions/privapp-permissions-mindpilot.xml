@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only requested signature|privileged permissions; runtime grants remain user-controlled. -->
+<permissions>
+    <privapp-permissions package="com.oplus.aiassistant">
+        <permission name="com.oplus.metis.factdata.permission.DATABASE" />
+        <permission name="com.oplus.permission.safe.AI_APP" />
+        <permission name="com.oplus.permission.safe.AUTHENTICATE" />
+        <permission name="com.oplus.permission.safe.PRIVATE" />
+        <permission name="com.oplus.permission.safe.PROTECT" />
+        <permission name="com.oplus.permission.safe.SECURITY" />
+        <permission name="com.oplus.permission.safe.SETTINGS" />
+        <permission name="com.oppo.permission.safe.PRIVATE" />
+        <permission name="oplus.permission.OPLUS_COMPONENT_SAFE" />
+        <permission name="oppo.permission.OPPO_COMPONENT_SAFE" />
+    </privapp-permissions>
+    <privapp-permissions package="com.oplus.matrix">
+        <permission name="com.oplus.permission.safe.AI_APP" />
+        <permission name="com.oplus.permission.safe.APP_MANAGER" />
+        <permission name="com.oplus.permission.safe.AUTHENTICATE" />
+        <permission name="com.oplus.permission.safe.PROTECT" />
+        <permission name="com.oplus.permission.safe.SECURITY" />
+        <permission name="com.oplus.permission.safe.SETTINGS" />
+        <permission name="com.oplus.permission.safe.SETTINGS_SEARCH" />
+        <permission name="com.oppo.permission.safe.AI_APP" />
+        <permission name="com.oppo.permission.safe.PRIVATE" />
+        <permission name="com.oppo.permission.safe.SECURITY" />
+        <permission name="oplus.permission.OPLUS_COMPONENT_SAFE" />
+        <permission name="oppo.permission.OPPO_COMPONENT_SAFE" />
+    </privapp-permissions>
+    <privapp-permissions package="com.oneplus.account">
+        <permission name="android.permission.GET_ACCOUNTS_PRIVILEGED" />
+        <permission name="android.permission.READ_PRIVILEGED_PHONE_STATE" />
+        <permission name="com.oplus.permission.safe.PRIVATE" />
+        <permission name="com.oplus.permission.safe.SECURITY" />
+        <permission name="com.oplus.permission.safe.SETTINGS" />
+        <permission name="com.oppo.permission.safe.SAU" />
+        <permission name="com.oppo.permission.safe.SECURITY" />
+        <permission name="oplus.permission.OPLUS_COMPONENT_SAFE" />
+        <permission name="oppo.permission.OPPO_COMPONENT_SAFE" />
+    </privapp-permissions>
+</permissions>

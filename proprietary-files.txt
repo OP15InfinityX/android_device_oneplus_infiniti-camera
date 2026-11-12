@@ -1,6 +1,11 @@
 ## All proprietary files from this list, unless pinned and noted otherwise,
 ## are from OnePlus 15 (ColorOS 17 CPH2745_17.0.0.102(EX01))
 
+# Mind Pilot
+my_stock/priv-app/aiassistant/aiassistant.apk:system_ext/priv-app/MindPilot/MindPilot.apk
+my_stock/priv-app/Matrix/Matrix.apk:system_ext/priv-app/AgentFramework/AgentFramework.apk
+my_stock/priv-app/KeKeUserCenter/KeKeUserCenter.apk:system_ext/priv-app/OnePlusAccount/OnePlusAccount.apk
+
 # Camera
 my_product/app/OplusCamera/OplusCamera.apk:system_ext/priv-app/OplusCamera/OplusCamera.apk;OVERRIDES=Camera2,GoogleCameraGo
 my_stock/priv-app/OppoGallery2/OppoGallery2.apk:system_ext/priv-app/OppoGallery2/OppoGallery2.apk

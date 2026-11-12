@@ -1,0 +1,2 @@
+# Keep the Mind Pilot transport/attestation access off unrelated platform apps.
+type oplusmindpilot_app, domain;

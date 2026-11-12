@@ -1,0 +1,7 @@
+typeattribute oplusmindpilot_app coredomain;
+app_domain(oplusmindpilot_app)
+net_domain(oplusmindpilot_app)
+bluetooth_domain(oplusmindpilot_app)
+platform_app_domain(oplusmindpilot_app)
+
+allow oplusmindpilot_app same_process_hal_file:file { getattr open read map };

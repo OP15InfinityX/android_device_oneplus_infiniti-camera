@@ -1,0 +1,12 @@
+# Both clients obtain genuine device-attestation certificates before submitting
+# requests. The live prototype reached the server only after these accesses.
+allow { oplusmindpilot_app oplusmatrix_app } vendor_hal_cryptoeng_oplus_service:service_manager find;
+binder_call(oplusmindpilot_app, vendor_hal_cryptoeng_oplus)
+binder_call(oplusmatrix_app, vendor_hal_cryptoeng_oplus)
+
+# CryptoEng reads the caller's process name for certificate issuance. Caller
+# app processes have per-user MCS categories; plain allow rules alone still
+# failed /proc/<pid>/cmdline access. Do not remove the clients' MLS isolation.
+typeattribute vendor_hal_cryptoeng_oplus mlstrustedsubject;
+allow vendor_hal_cryptoeng_oplus { oplusmindpilot_app oplusmatrix_app }:dir search;
+allow vendor_hal_cryptoeng_oplus { oplusmindpilot_app oplusmatrix_app }:file { getattr open read };

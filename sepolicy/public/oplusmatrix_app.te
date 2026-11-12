@@ -1,0 +1,2 @@
+# Agent Framework hosts the AgentOS runtime in its own package-specific domain.
+type oplusmatrix_app, domain;

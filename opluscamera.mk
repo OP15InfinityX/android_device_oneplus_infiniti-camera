@@ -2,6 +2,15 @@
 OPLUS_CAMERA_PATH := device/oneplus/infiniti-camera
 
 # Blob dependencies
+# Match the identity/region inputs used by the source OTA's account SDK.
+# Missing pipeline.region selects the legacy sign-in route in Mind Pilot.
+PRODUCT_SYSTEM_EXT_PROPERTIES += \
+    ro.oplus.image.system_ext.brand=oneplus \
+    ro.oplus.pipeline.region=IN
+
+PRODUCT_COPY_FILES += \
+    $(OPLUS_CAMERA_PATH)/configs/permissions/privapp-permissions-mindpilot.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/privapp-permissions-mindpilot.xml
+
 PRODUCT_PACKAGES += \
     aon.frameworkres.overlay.product \
     android.hardware.graphics.common-V3-ndk.vendor \

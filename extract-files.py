@@ -31,6 +31,7 @@ from extract_utils_oplus.coui_material import (blob_fixup_coui_material_capabili
 from appfeature_provider import blob_fixup_appfeature_provider
 from private_safe import blob_fixup_private_safe_unlock_dialog
 from phonemanager_compat import blob_fixup_phonemanager_oplus_log
+from mindpilot_compat import blob_fixup_mindpilot_dex_layout
 from filemanager_compat import (
     blob_fixup_filemanager_atlas_debug_log,
     blob_fixup_filemanager_text_metrics,
@@ -6406,6 +6407,12 @@ def blob_fixup_filemanager_safecheck_direct(ctx, file, file_path, *args, tmp_dir
 
 
 blob_fixups: blob_fixups_user_type = {
+    'system_ext/priv-app/MindPilot/MindPilot.apk': blob_fixup()
+        .call(blob_fixup_apktool_unpack_src)
+        .call(blob_fixup_coui_material_capabilities)
+        .call(blob_fixup_mindpilot_dex_layout)
+        .apktool_pack()
+        .stripzip(),
     'product/priv-app/AIMemory/AIMemory.apk': blob_fixup()
         .call(blob_fixup_apktool_unpack_full)
         .call(blob_fixup_coui_material_capabilities)

@@ -7,5 +7,7 @@
   ( new_objects
     oplusaiunit_app
     oplusgallery_app
+    oplusmatrix_app
+    oplusmindpilot_app
     opluscamera_app
     opluscamera_app_data_file))

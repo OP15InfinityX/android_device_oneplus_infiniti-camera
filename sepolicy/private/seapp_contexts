@@ -8,3 +8,9 @@ user=_app seinfo=platform name=com.oplus.aiunit domain=oplusaiunit_app type=app_
 user=_app seinfo=platform name=com.oplus.aiunit:* domain=oplusaiunit_app type=app_data_file levelFrom=user
 user=_app seinfo=platform name=com.oneplus.gallery domain=oplusgallery_app type=app_data_file levelFrom=user
 user=_app seinfo=platform name=com.oneplus.gallery:* domain=oplusgallery_app type=app_data_file levelFrom=user
+
+# Mind Pilot and Agent Framework retain per-user app-data isolation.
+user=_app seinfo=platform name=com.oplus.aiassistant domain=oplusmindpilot_app type=app_data_file levelFrom=user
+user=_app seinfo=platform name=com.oplus.aiassistant:* domain=oplusmindpilot_app type=app_data_file levelFrom=user
+user=_app seinfo=platform name=com.oplus.matrix domain=oplusmatrix_app type=app_data_file levelFrom=user
+user=_app seinfo=platform name=com.oplus.matrix:* domain=oplusmatrix_app type=app_data_file levelFrom=user
